@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+      "target": "es2019",
+      "module": "CommonJS",
+      "outDir": "./dist",
+      "strict": true,
+      "noImplicitReturns": true,
+      "noImplicitAny":true,
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "**/*.test.ts"]
+  }
