@@ -9,6 +9,7 @@
 import { usersRepository } from '../repositories/users-repository';
 import bcrypt from 'bcryptjs';
 import { UserType } from '../repositories/db';
+import { generateAccessToken, TokenPayload } from '../utils/jwt';
 
 
 export const userService = {
@@ -39,16 +40,31 @@ export const userService = {
     const newUser = await usersRepository.createUser(login, email, passwordHash);
     return newUser;
 },
-    async loginUser(loginOrEmail: string, password: string): Promise<boolean>{
+    async loginUser(loginOrEmail: string, password: string): Promise<string | null>{
         const user = await usersRepository.findUserByLoginOrEmail(loginOrEmail);
         if(!user){
-            return false;
+            return null;
         }
 
         const isMatch = await bcrypt.compare(password, user.passwordHash);
-        return isMatch;
+        if(!isMatch){
+            return null;
+        }
+
+        const tokenPayload: TokenPayload = {
+        userId: user.id,
+        email: user.email,
+        login: user.login
+    };
+
+        const token = generateAccessToken(tokenPayload)
+        return token;
+    
+    
     },
 
+
+   
   
 };
 

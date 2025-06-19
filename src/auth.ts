@@ -1,6 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { userService } from './services/user-service';
-import { usersRepository } from './repositories/users-repository';
+
+
 
 //всем привет!!!
 interface AuthLoginBody {
@@ -27,11 +28,11 @@ authRoute.post('/login', async (req: Request, res: Response) => {
   }
 
   try {
-    const isAuthenticated = await userService.loginUser(loginOrEmail, password);
-    if (!isAuthenticated) {
+    const token = await userService.loginUser(loginOrEmail, password);
+    if (!token) {
       return res.status(401).send('Unauthorized');
     }
-    res.sendStatus(204);
+    res.sendStatus(204).json({token: token});
   } catch (error) {
     console.log(error, ' error');
     res.status(500).send('Error during login');
@@ -39,3 +40,9 @@ authRoute.post('/login', async (req: Request, res: Response) => {
 
   return true
 });
+
+
+authRoute.get('/auth/me',async(req: Request, res: Response) => {
+
+
+})
