@@ -11,6 +11,7 @@ exports.userService = void 0;
 // Логика авторизации с проверкой пароля через bcrypt.
 const users_repository_1 = require("../repositories/users-repository");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const jwt_1 = require("../utils/jwt");
 exports.userService = {
     async createUser(login, email, password) {
         // Проверка уникальности login и email с помощью методов репозитория
@@ -38,9 +39,18 @@ exports.userService = {
     async loginUser(loginOrEmail, password) {
         const user = await users_repository_1.usersRepository.findUserByLoginOrEmail(loginOrEmail);
         if (!user) {
-            return false;
+            return null;
         }
         const isMatch = await bcryptjs_1.default.compare(password, user.passwordHash);
-        return isMatch;
+        if (!isMatch) {
+            return null;
+        }
+        const tokenPayload = {
+            userId: user.id,
+            email: user.email,
+            login: user.login
+        };
+        const token = (0, jwt_1.generateAccessToken)(tokenPayload);
+        return token;
     },
 };
