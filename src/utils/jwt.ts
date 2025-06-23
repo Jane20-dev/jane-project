@@ -3,9 +3,10 @@ import jwt from 'jsonwebtoken';
 const jWT_SECRET: string = process.env.JWT_SECRET || '1aB2cE3fG4hI5jK6lM7nO8pQ9rS0tU1vW2xY3z!@#$%^&*()';
 
 export interface TokenPayload {
+    userLogin: string;
     userId: string;
     email: string;
-    login: string;
+    // login: string;
 };
 
 export const generateAccessToken = (payload: TokenPayload): string => {

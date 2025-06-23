@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.usersCollection = exports.postsCollection = exports.blogCollection = exports.runDb = void 0;
+exports.commentsCollection = exports.usersCollection = exports.postsCollection = exports.blogCollection = exports.runDb = void 0;
 const mongodb_1 = require("mongodb");
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
@@ -49,3 +49,4 @@ exports.runDb = runDb;
 exports.blogCollection = client.db().collection('blog');
 exports.postsCollection = client.db().collection('post');
 exports.usersCollection = client.db().collection('users');
+exports.commentsCollection = client.db().collection('comments');

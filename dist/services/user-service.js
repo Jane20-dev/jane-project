@@ -48,7 +48,7 @@ exports.userService = {
         const tokenPayload = {
             userId: user.id,
             email: user.email,
-            login: user.login
+            userLogin: user.login
         };
         const token = (0, jwt_1.generateAccessToken)(tokenPayload);
         return token;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authRoute = void 0;
+exports.authenticateToken = exports.authRoute = void 0;
 const express_1 = require("express");
 const user_service_1 = require("./services/user-service");
 const jwt_1 = require("./utils/jwt");
@@ -18,7 +18,7 @@ const authenticateToken = (req, res, next) => {
     }
     // 3. Верифицируем токен с помощью вашей утилиты
     const decodedPayload = (0, jwt_1.verifyAccessToken)(token);
-    // 4. Если токен недействителен (просрочен, подделан и т.д.), отправляем 403 Forbidden
+    // 4. Если токен недействителен (просрочен, подделан и т.д.)403 Forbidden
     if (!decodedPayload) {
         return res.status(403).json({ message: 'Недействительный или просроченный токен.' });
     }
@@ -28,6 +28,7 @@ const authenticateToken = (req, res, next) => {
     // 6. Передаем управление следующему middleware или обработчику маршрута
     next();
 };
+exports.authenticateToken = authenticateToken;
 exports.authRoute.post('/login', async (req, res) => {
     const { loginOrEmail, password } = req.body;
     const errorsMessages = [];
@@ -46,7 +47,7 @@ exports.authRoute.post('/login', async (req, res) => {
         if (!token) {
             return res.status(401).send('Unauthorized');
         }
-        res.status(200).json({ token: token });
+        res.status(200).send({ accessToken: token });
     }
     catch (error) {
         console.log(error, ' error');
@@ -54,13 +55,13 @@ exports.authRoute.post('/login', async (req, res) => {
     }
     return true;
 });
-exports.authRoute.get('/me', authenticateToken, async (req, res) => {
+exports.authRoute.get('/me', exports.authenticateToken, async (req, res) => {
     if (!req.user) {
         return res.status(500).json({ message: 'Ошибка сервера' });
     }
     res.status(200).json({
         userId: req.user.userId,
-        login: req.user.login,
-        email: req.user.email
+        userLogin: req.user.userLogin
     });
+    return true;
 });

@@ -54,7 +54,7 @@ export const userService = {
         const tokenPayload: TokenPayload = {
         userId: user.id,
         email: user.email,
-        login: user.login
+        userLogin: user.login
     };
 
         const token = generateAccessToken(tokenPayload)

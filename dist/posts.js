@@ -1,17 +1,14 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.postRoute = void 0;
 const express_1 = require("express");
-const settings_1 = require("./settings");
-const express_2 = __importDefault(require("express"));
 const db_1 = require("./repositories/db");
+const db_2 = require("./repositories/db");
 const posts_repository_1 = require("./repositories/posts-repository");
 const mongodb_1 = require("mongodb");
+const comments_repository_1 = require("./repositories/comments-repository");
+const auth_1 = require("./auth");
 exports.postRoute = (0, express_1.Router)();
-settings_1.app.use(express_2.default.json());
 exports.postRoute.get('/', async (req, res) => {
     const queryParams = {
         sortBy: typeof req.query.sortBy === 'string' ? req.query.sortBy : "createdAt",
@@ -36,9 +33,6 @@ exports.postRoute.get('/:id', async (req, res) => {
 const findBlogById = async (id) => {
     return await db_1.blogCollection.findOne({ _id: new mongodb_1.ObjectId(id) });
 };
-// const findBlogById = (id: string) => {
-//     return blogs.find(blog => blog.id === id)
-// }
 exports.postRoute.post('/', async (req, res) => {
     const { title, shortDescription, content, blogId, blogName, createdAt } = req.body;
     const errorsMessages = [];
@@ -82,6 +76,45 @@ exports.postRoute.post('/', async (req, res) => {
     catch (error) {
         console.log(error, " error");
         return res.status(500).send('Error creating post');
+    }
+});
+exports.postRoute.post('/:postId/comments', auth_1.authenticateToken, async (req, res) => {
+    const postId = req.params.postId;
+    const { content } = req.body; //тело запроса
+    let post;
+    try {
+        post = await db_2.postsCollection.findOne({ _id: new mongodb_1.ObjectId(postId) });
+    }
+    catch (e) {
+        console.error("Error finding post by ObjectId:", e); // Логируем ошибку, если postId невалиден
+        return res.sendStatus(404);
+    }
+    if (!post) {
+        return res.sendStatus(404);
+    }
+    if (!content || typeof content !== 'string' || content.length < 20 || content.length > 300) {
+        return res.status(400).send({
+            errorsMessages: [{ message: 'Incorrect content length or type', field: 'content' }]
+        });
+    }
+    if (!req.user || !req.user.userId || !req.user.userLogin) {
+        return res.sendStatus(500);
+    }
+    const userId = req.user.userId;
+    const userLogin = req.user.userLogin;
+    try {
+        const newComment = await comments_repository_1.commentsRepository.createComment(postId, content, req.user.userId, req.user.userLogin);
+        console.log("Контроллер: Получено из репозитория (newComment):", newComment);
+        if (newComment) {
+            return res.status(201).send(newComment);
+        }
+        else {
+            return res.status(500).send({ message: 'Failed to create comm' });
+        }
+    }
+    catch (error) {
+        console.error("Контроллер: Необработанная ошибка в роуте POST /comments:", error);
+        return res.status(500).send({ message: 'Internal Server Error' });
     }
 });
 exports.postRoute.put('/:id', async (req, res) => {
@@ -136,10 +169,6 @@ exports.postRoute.put('/:id', async (req, res) => {
     if (errorsMessages.length > 0) {
         return res.status(400).send({ errorsMessages });
     }
-    // const existingPost = await postsRepository.findPostsbyId(blogId);
-    // if (!existingPost) {
-    //     return res.sendStatus(404); // Блог не найден
-    // }
     const updatedPosts = await posts_repository_1.postsRepository.updatedPosts(postId, title, shortDescription, content, blogId);
     if (updatedPosts) {
         return res.sendStatus(204);

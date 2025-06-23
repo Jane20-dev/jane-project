@@ -31,6 +31,19 @@ export type UserType = {
     createdAt: string;
 };
 
+export type CommentatorInfoType = {
+    userId: string;
+    userLogin: string;
+}
+
+export type CommentType = {
+    id: string;
+    content: string;
+    commentatorInfo: CommentatorInfoType;
+    createdAt: string;
+
+}
+
 
 // Conection URL
 
@@ -56,4 +69,5 @@ export const runDb = async()=>{
 export const blogCollection = client.db().collection<BlogType>('blog');
 export const postsCollection = client.db().collection<PostType>('post');
 export const usersCollection = client.db().collection<UserType>('users'); 
+export const commentsCollection = client.db().collection<CommentType>('comments')
 

@@ -1,4 +1,4 @@
-import {Request, response, Response, Router} from 'express'
+import {Request, Response, Router} from 'express'
 import { app } from './settings';
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,8 +8,9 @@ import { postsCollection } from './repositories/db';
 import { blogsRepository } from './repositories/blogs-repository';
 import { postsRepository } from './repositories/posts-repository';
 import { ObjectId } from 'mongodb';
+import { commentsRepository } from './repositories/comments-repository';
+import { authenticateToken } from './auth';
 export const postRoute = Router();
-app.use(express.json());
 
 
 
@@ -41,12 +42,6 @@ const findBlogById = async (id: string) => {
     return await blogCollection.findOne({ _id: new ObjectId(id) });
 }
 
-// const findBlogById = (id: string) => {
-//     return blogs.find(blog => blog.id === id)
-// }
-
-
-
 
 
 postRoute.post('/',async (req: Request, res: Response) => {
@@ -65,8 +60,6 @@ postRoute.post('/',async (req: Request, res: Response) => {
     if (base64Credentials !== 'YWRtaW46cXdlcnR5' || username !== 'admin' || password !== 'qwerty') {
         return res.status(401).send('Unauthorized');
     }
-
-
 
     if (!title || title.trim().length === 0 || title.length > 30) {
         errorsMessages.push({ message: 'not valid title', field: 'title' });
@@ -105,6 +98,55 @@ postRoute.post('/',async (req: Request, res: Response) => {
     
 });
 
+postRoute.post('/:postId/comments', authenticateToken,  async (req:Request, res:Response)=>{
+    const postId = req.params.postId;
+    const {content} = req.body; //тело запроса
+    
+    let post
+    try{
+       post = await postsCollection.findOne({_id: new ObjectId(postId)});
+    } catch (e){
+        console.error("Error finding post by ObjectId:", e); // Логируем ошибку, если postId невалиден
+        return res.sendStatus(404);
+
+    }
+    
+    if(!post){
+        return res.sendStatus(404);
+    }
+
+    if(!content || typeof content !== 'string' || content.length < 20 || content.length > 300){
+        return res.status(400).send({
+            errorsMessages: [{message: 'Incorrect content length or type', field: 'content'}]
+        });
+    }
+        if (!req.user || !req.user.userId || !req.user.userLogin) {
+        return res.sendStatus(500);
+    }
+    const userId = req.user.userId;
+    const userLogin = req.user.userLogin;
+    try {
+        const newComment = await commentsRepository.createComment(
+        postId,
+        content,
+        req.user.userId,
+        req.user.userLogin
+    );
+    console.log("Контроллер: Получено из репозитория (newComment):", newComment);
+    if(newComment){
+        return res.status(201).send(newComment);
+    }else{
+        return res.status(500).send({message: 'Failed to create comm'})
+    }
+
+    }catch(error){
+    console.error("Контроллер: Необработанная ошибка в роуте POST /comments:", error);
+    return res.status(500).send({ message: 'Internal Server Error' });
+    }
+    
+
+    
+});
 
 
 postRoute.put('/:id', async(req:Request, res:Response) => {
@@ -155,7 +197,6 @@ postRoute.put('/:id', async(req:Request, res:Response) => {
     }
    
 
-
     if (!blogId || typeof blogId !== 'string' || blogId.length !== 24) {
         errorsMessages.push({ message: 'Invalid blogId format',field: 'blogId' });
     }else{
@@ -167,17 +208,9 @@ postRoute.put('/:id', async(req:Request, res:Response) => {
     }
 
 
-    
     if (errorsMessages.length > 0){
         return res.status(400).send({ errorsMessages });
     }
-
-    // const existingPost = await postsRepository.findPostsbyId(blogId);
-    // if (!existingPost) {
-    //     return res.sendStatus(404); // Блог не найден
-    // }
-
-
 
     const updatedPosts = await postsRepository.updatedPosts(postId,title,shortDescription,content,blogId)
 
@@ -186,8 +219,6 @@ postRoute.put('/:id', async(req:Request, res:Response) => {
     }else{
         return res.sendStatus(404)
     }
-
-
 
 })
 
@@ -224,6 +255,8 @@ postRoute.delete('/:id', async (req: Request,res : Response)=>{
     }
  
 })
+
+
 
 function findPostsList(blogId: string, postData: any) {
     throw new Error('Function not implemented.');
