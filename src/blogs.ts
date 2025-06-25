@@ -1,5 +1,5 @@
 import {Request, Response, Router} from 'express'
-import { app } from './settings';
+import { app } from './index';
 import express from 'express';
 import { blogsRepository } from './repositories/blogs-repository';
 import { postsRepository } from './repositories/posts-repository';

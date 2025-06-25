@@ -1,15 +1,11 @@
 import {Request, Response, Router} from 'express'
-import { app } from './settings';
-import express from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import { blogCollection } from './repositories/db';
 import { postsCollection } from './repositories/db';
-// import { blogs } from './repositories/blogs-repository';
-import { blogsRepository } from './repositories/blogs-repository';
 import { postsRepository } from './repositories/posts-repository';
 import { ObjectId } from 'mongodb';
 import { commentsRepository } from './repositories/comments-repository';
 import { authenticateToken } from './auth';
+
 export const postRoute = Router();
 
 
@@ -144,9 +140,49 @@ postRoute.post('/:postId/comments', authenticateToken,  async (req:Request, res:
     return res.status(500).send({ message: 'Internal Server Error' });
     }
     
-
-    
 });
+
+postRoute.get('/:postId/comments',  async(req: Request, res: Response)=>{
+   const postIdFromUrl = req.params.postId;
+
+   try {
+    const postExists = await postsCollection.findOne({_id: new ObjectId(postIdFromUrl)})
+    if(!postExists){
+        return res.status(404).send({message: 'Post not found'});
+
+    }
+   } catch (error) {
+    return res.status(500).send({message: 'Int Server error'});
+   }
+   const pageSize = Number(req.query.pageSize) || 10;
+    const pageNumber = Number(req.query.pageNumber) || 1;
+    const sortBy = typeof req.query.sortBy === 'string' ? req.query.sortBy : 'createdAt';
+    const sortDirection = (req.query.sortDirection === 'asc' || req.query.sortDirection === 'desc') 
+    ? req.query.sortDirection 
+    : 'desc' as 'asc' | 'desc';
+
+    const queryForRepository = {
+        pageNumber: pageNumber,
+       pageSize: pageSize,
+       sortBy: sortBy,
+       sortDirection: sortDirection
+
+    }
+   try {
+    const pagedComments = await commentsRepository.getCommentForPost(
+        postIdFromUrl,
+        queryForRepository
+        
+       
+    )
+    return res.status(200).send(pagedComments);
+
+   } catch (error) {
+    return res.status(500).send({message: 'Int server error'});
+   }
+
+
+})
 
 
 postRoute.put('/:id', async(req:Request, res:Response) => {

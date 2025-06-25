@@ -1,16 +1,10 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userRoute = void 0;
 const express_1 = require("express");
-const settings_1 = require("./settings");
-const express_2 = __importDefault(require("express"));
 const users_repository_1 = require("./repositories/users-repository");
 const user_service_1 = require("./services/user-service");
 exports.userRoute = (0, express_1.Router)();
-settings_1.app.use(express_2.default.json());
 const checkBasicAuth = (req, res) => {
     const isHeaders = req.headers['authorization'];
     if (!isHeaders || !isHeaders.startsWith('Basic')) {
@@ -84,31 +78,6 @@ exports.userRoute.post('/', async (req, res) => {
     }
     return true;
 });
-// userRoute.post('/auth/login', async(req: Request,res: Response)=>{
-//     if(!checkBasicAuth(req,res)) return;
-//     const {loginOrEmail, password} = req.body;
-//     const errorsMessages : {message: string; field: string} [] = [];
-//       // Валидация входных данных
-//   if (!loginOrEmail || loginOrEmail.trim().length === 0) {
-//     errorsMessages.push({ message: 'not valid login or email', field: 'loginOrEmail' });
-//   }
-//   if (!password || password.trim().length === 0) {
-//     errorsMessages.push({ message: 'not valid password', field: 'password' });
-//   }
-//   if (errorsMessages.length > 0) {
-//     return res.status(400).send({ errorsMessages });
-//   }
-//   try {
-//     const isAuthenticated = await userService.loginUser(loginOrEmail, password);
-//     if (!isAuthenticated) {
-//       return res.status(401).send('Unauthorized');
-//     }
-//     res.sendStatus(204);
-//   } catch (error) {
-//     console.error('Error during login:', error);
-//     res.status(500).send('Error during login');
-//   }
-// })
 exports.userRoute.delete('/:id', async (req, res) => {
     if (!checkBasicAuth(req, res))
         return;

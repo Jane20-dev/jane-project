@@ -1,6 +1,6 @@
 import express, {Request, Response, response} from 'express'
 import bodyParser from 'body-parser'
-import { app } from './settings'
+import { app } from './index'
 //const app = express()
 //const port = 3003
 

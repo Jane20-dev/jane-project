@@ -41,8 +41,11 @@ export type CommentType = {
     content: string;
     commentatorInfo: CommentatorInfoType;
     createdAt: string;
-
+    postId: string
 }
+
+export type CommentResponseClientType = Omit<CommentType, 'postId'>;
+
 
 
 // Conection URL

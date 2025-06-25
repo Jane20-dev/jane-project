@@ -10,7 +10,7 @@ import {blogCollection, postsCollection, usersCollection, commentsCollection, ru
 
 
 
-const app = express()
+export const app = express()
 const port = 3000
 
 app.use(bodyParser.json());
@@ -36,6 +36,7 @@ app.delete('/testing/all-data', async (req: Request,res: Response) => {
 const startApp = async()=>{
     await runDb()
 }
+
 
 
 

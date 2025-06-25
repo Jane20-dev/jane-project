@@ -1,14 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.videos = void 0;
-const settings_1 = require("./settings");
+const index_1 = require("./index");
 //const app = express()
 //const port = 3003
 // app.use(bodyParser.urlencoded({ extended: false }));
 //app.use(bodyParser.json());
 exports.videos = [];
 const availableResolutions = ['P144', 'P240', 'P360', 'P480', 'P720', 'P1080', 'P1440', 'P2160'];
-settings_1.app.post('/videos', (req, res) => {
+index_1.app.post('/videos', (req, res) => {
     const errorsMessages = [];
     const inputedData = req.body;
     if (!inputedData.title) {
@@ -48,7 +48,7 @@ settings_1.app.post('/videos', (req, res) => {
     exports.videos.push(newVideo);
     return res.status(201).send(newVideo);
 });
-settings_1.app.get('/videos/:id', (req, res) => {
+index_1.app.get('/videos/:id', (req, res) => {
     let video;
     for (let i = 0; i < exports.videos.length; i++) {
         if (exports.videos[i].id === +req.params.id) {
@@ -60,7 +60,7 @@ settings_1.app.get('/videos/:id', (req, res) => {
     }
     return res.sendStatus(404);
 });
-settings_1.app.get('/videos', (req, res) => {
+index_1.app.get('/videos', (req, res) => {
     console.log({ videos: exports.videos });
     if (exports.videos.length > 0) {
         return res.status(200).send(exports.videos);
@@ -69,7 +69,7 @@ settings_1.app.get('/videos', (req, res) => {
         return res.status(404).send('No videos found');
     }
 });
-settings_1.app.put('/videos/:id', (req, res) => {
+index_1.app.put('/videos/:id', (req, res) => {
     const errors = [];
     const videoId = +req.params.id;
     const updatedVideo = req.body;
@@ -101,7 +101,7 @@ settings_1.app.put('/videos/:id', (req, res) => {
         return res.sendStatus(404);
     }
 });
-settings_1.app.delete('/videos/:id', (req, res) => {
+index_1.app.delete('/videos/:id', (req, res) => {
     for (let i = 0; i < exports.videos.length; i++) {
         if (exports.videos[i].id === +req.params.id) {
             exports.videos.splice(i, 1);

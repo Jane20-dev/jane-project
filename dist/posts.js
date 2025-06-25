@@ -117,6 +117,37 @@ exports.postRoute.post('/:postId/comments', auth_1.authenticateToken, async (req
         return res.status(500).send({ message: 'Internal Server Error' });
     }
 });
+exports.postRoute.get('/:postId/comments', async (req, res) => {
+    const postIdFromUrl = req.params.postId;
+    try {
+        const postExists = await db_2.postsCollection.findOne({ _id: new mongodb_1.ObjectId(postIdFromUrl) });
+        if (!postExists) {
+            return res.status(404).send({ message: 'Post not found' });
+        }
+    }
+    catch (error) {
+        return res.status(500).send({ message: 'Int Server error' });
+    }
+    const pageSize = Number(req.query.pageSize) || 10;
+    const pageNumber = Number(req.query.pageNumber) || 1;
+    const sortBy = typeof req.query.sortBy === 'string' ? req.query.sortBy : 'createdAt';
+    const sortDirection = (req.query.sortDirection === 'asc' || req.query.sortDirection === 'desc')
+        ? req.query.sortDirection
+        : 'desc';
+    const queryForRepository = {
+        pageNumber: pageNumber,
+        pageSize: pageSize,
+        sortBy: sortBy,
+        sortDirection: sortDirection
+    };
+    try {
+        const pagedComments = await comments_repository_1.commentsRepository.getCommentForPost(postIdFromUrl, queryForRepository);
+        return res.status(200).send(pagedComments);
+    }
+    catch (error) {
+        return res.status(500).send({ message: 'Int server error' });
+    }
+});
 exports.postRoute.put('/:id', async (req, res) => {
     const { title, shortDescription, content, blogId } = req.body;
     const errorsMessages = [];

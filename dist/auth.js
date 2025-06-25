@@ -6,27 +6,27 @@ const user_service_1 = require("./services/user-service");
 const jwt_1 = require("./utils/jwt");
 exports.authRoute = (0, express_1.Router)();
 // --- Middleware для аутентификации JWT токена ---
-// Этот middleware будет проверять токен перед тем, как запрос дойдет до конечного обработчика маршрута.
 const authenticateToken = (req, res, next) => {
-    // 1. Извлекаем заголовок 'Authorization'
     const authHeader = req.headers['authorization'];
-    // Ожидаем формат: "Bearer <YOUR_TOKEN>"
+    if (!authHeader || !authHeader.startsWith('Bearer')) {
+        return res.status(401).json({ message: 'Need Bearer token' });
+    }
     const token = authHeader && authHeader.split(' ')[1];
-    // 2. Если токена нет, отправляем 401 Unauthorized
-    if (token == null) {
+    //  Если токена нет, отправляем 401 Unauthorized
+    if (!token) {
         return res.status(401).json({ message: 'Требуется аутентификация: токен не предоставлен.' });
     }
-    // 3. Верифицируем токен с помощью вашей утилиты
-    const decodedPayload = (0, jwt_1.verifyAccessToken)(token);
-    // 4. Если токен недействителен (просрочен, подделан и т.д.)403 Forbidden
-    if (!decodedPayload) {
-        return res.status(403).json({ message: 'Недействительный или просроченный токен.' });
+    try {
+        const decodedPayload = (0, jwt_1.verifyAccessToken)(token);
+        if (!decodedPayload) {
+            return res.status(401).json({ message: 'Недействительный или просроченный токен.' });
+        }
+        req.user = decodedPayload;
+        return next(); // Передаем управление дальше, только если все в порядке
     }
-    // 5. Если токен действителен, прикрепляем декодированную полезную нагрузку к объекту req
-    // Теперь информация о пользователе (userId, email, login) будет доступна в req.user
-    req.user = decodedPayload;
-    // 6. Передаем управление следующему middleware или обработчику маршрута
-    next();
+    catch (error) {
+        return res.status(403).json({ message: 'Токен просрочен' });
+    }
 };
 exports.authenticateToken = authenticateToken;
 exports.authRoute.post('/login', async (req, res) => {

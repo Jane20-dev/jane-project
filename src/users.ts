@@ -1,13 +1,10 @@
-import {Request, response, Response, Router} from 'express'
-import { app } from './settings';
-import express from 'express';
+import {Request, Response, Router} from 'express'
 import { usersRepository } from './repositories/users-repository';
-import { request } from 'http';
 import { userService } from './services/user-service';
 
 
 export const userRoute = Router();
-app.use(express.json());
+
 
 const checkBasicAuth = (req: Request, res: Response): boolean => {
     const isHeaders = req.headers['authorization'];
@@ -99,36 +96,6 @@ userRoute.post('/', async (req: Request, res: Response)=> {
 
 });
 
-// userRoute.post('/auth/login', async(req: Request,res: Response)=>{
-//     if(!checkBasicAuth(req,res)) return;
-
-//     const {loginOrEmail, password} = req.body;
-//     const errorsMessages : {message: string; field: string} [] = [];
-
-//       // Валидация входных данных
-//   if (!loginOrEmail || loginOrEmail.trim().length === 0) {
-//     errorsMessages.push({ message: 'not valid login or email', field: 'loginOrEmail' });
-//   }
-//   if (!password || password.trim().length === 0) {
-//     errorsMessages.push({ message: 'not valid password', field: 'password' });
-//   }
-
-//   if (errorsMessages.length > 0) {
-//     return res.status(400).send({ errorsMessages });
-//   }
-
-//   try {
-//     const isAuthenticated = await userService.loginUser(loginOrEmail, password);
-//     if (!isAuthenticated) {
-//       return res.status(401).send('Unauthorized');
-//     }
-//     res.sendStatus(204);
-//   } catch (error) {
-//     console.error('Error during login:', error);
-//     res.status(500).send('Error during login');
-//   }
-    
-// })
 
 userRoute.delete('/:id', async (req: Request, res: Response)=> {
     if (!checkBasicAuth(req, res)) return;

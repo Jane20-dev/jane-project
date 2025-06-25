@@ -1,68 +1,19 @@
 import {Request, Response, Router} from "express"
-import {app} from './settings';
-import express from 'express';
-import { ObjectId } from "mongodb";
 import { commentsRepository } from "./repositories/comments-repository";
 import { commentsCollection } from "./repositories/db";
 import { authenticateToken } from "./auth";
-import { postsCollection } from "./repositories/db";
+import { TokenPayload } from "./utils/jwt";
 
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: TokenPayload;
+  }
+}
 export const commentRoute = Router();
-app.use(express.json());
 
 
-// commentRoute.post('/:postId', authenticateToken, async (req: Request, res: Response)=>{
-//     const postId = req.params.postId;
-//     const {content} = req.body;
-//     const errorsMessages = [];
-
-//     if(!ObjectId.isValid(postId)){
-//         errorsMessages.push({message:'Post not found', field: postId});
-
-//     }
-
-//     if (!content || typeof content !== 'string' || content.length < 20 || content.length > 300){
-//         errorsMessages.push({message: 'Content must be 20-300 symbols', field: 'content'});
-
-//     }
-//     if (errorsMessages.length > 0){
-//         return res.status(400).send({errorsMessages});
-
-//     }
-
-//     const post = await postsCollection.findOne({_id: new ObjectId(postId)});
-//     if(!post){
-//         return res.status(400).send({message: 'Post not found'});
-
-//     }
-
-//     if(!req.user || !req.user.userId || !req.user.userLogin){
-//         return res.status(500).send({message: 'auth token error'});
-
-//     }
-
-//     try{
-//         const newComment = await commentsRepository.createComment(
-//             postId,
-//             content,
-//             req.user.userId,
-//             req.user.userLogin
-//         )
-//         if(newComment){
-//             return res.status(201).send(newComment)
-//         }else{
-//             return res.status(500).send({message: 'Failed to create comment'})
-//         }
-//     } catch (error) {
-//         return res.status(500).send({message: 'Server error'})
-//     }
-
-
-
-// })
 commentRoute.get('/:id', async (req: Request, res: Response) => {
     const commentId = req.params.id;
-
 
     try {
         const comment = await commentsCollection.findOne({id: commentId});
@@ -77,6 +28,77 @@ commentRoute.get('/:id', async (req: Request, res: Response) => {
         return res.status(500).send({message: 'Internal sever Error'})
     }
 
+});
+
+commentRoute.delete('/:commentId',authenticateToken, async (req: Request, res:Response)=>{
+    const commentId = req.params.commentId;
+    const userIdFromToken = req.user?.userId;
+
+    if (!userIdFromToken) {
+        return res.status(401).send({ message: 'User ID not found in token.' });
+    }
+
+    try {
+        const comment = await commentsCollection.findOne({id: commentId});
+        if(!comment){
+            return res.status(404).send({message: 'Comment not found'});
+        }
+        if (comment.commentatorInfo.userId !== userIdFromToken) {
+    
+            return res.status(403).send({ message: 'You are not the owner of this comment.' });
+        }
+        const deletedComment = await commentsRepository.deleteCommentById(commentId);
+        if(deletedComment.deletedCount === 0){
+            return res.status(404).send({message: 'Cannot delete comment'})
+        }
+        return res.status(204).send({message:'deleted comment'})
+    } catch (error) {
+        console.error("Error deleting comment:", error);
+        return res.status(500).send('Error deleting comment')
+        
+    }
+});
+
+commentRoute.put('/:commentId',authenticateToken, async(req: Request, res: Response)=>{
+    const commentId = req.params.commentId;
+    const {content} = req.body;
+    const errorsMessages = [];
+
+    if(!content || typeof content !== 'string' || content.trim().length < 20 || content.trim().length > 300){
+        errorsMessages.push({message: 'Content is wrong!', field: 'content'});
+    }
+
+    if(errorsMessages.length > 0){
+        return res.status(400).json({errorsMessages});
+    }
+
+    const userIdFromToken = req.user?.userId;
+
+    if(!userIdFromToken){
+        return res.status(403).send({message: 'Token has not user data!'});
+    }
+
+    const commentNow = await commentsCollection.findOne({id: commentId});
+
+    if(!commentNow){
+        return res.status(404).send({message: 'Comment not found!'});
+    }
+
+    if(commentNow.commentatorInfo.userId !== userIdFromToken){
+        return res.status(403).send({message: 'Forbidden: You are not the owner of this comment.'});
+    }
+
+    try {
+        const updateComment = await commentsRepository.updateCommentById(commentId, content)
+        if(!updateComment){
+            return res.status(404).send({message: 'Cannot update comment'})
+        }
+        return res.status(204).send({message:'Comment is updated!'})
+
+    } catch (error) {
+        console.error("Error updt comment:", error);
+        return res.status(500).send('Error updt commnet')
+    }
 })
 
 
