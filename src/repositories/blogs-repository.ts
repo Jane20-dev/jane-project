@@ -3,7 +3,7 @@ import { blogCollection, BlogType } from './db';
 import {ObjectId, SortDirection} from 'mongodb';
 import {runDb} from './db'
 import { isMemberName } from 'typescript';
-import { BasePagination } from '../types';
+import { BasePagination } from './db';
 
 const startServer = async () =>{
     await runDb()

@@ -4,7 +4,7 @@ import {postsCollection, PostType} from './db'
 import { blogCollection, BlogType } from './db';
 import {runDb} from './db'
 import { title } from 'process';
-import { BasePagination } from '../types';
+import { BasePagination } from './db';
 
 
 const startServer = async () =>{

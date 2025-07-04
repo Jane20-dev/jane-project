@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.usersRepository = void 0;
-const uuid_1 = require("uuid");
 const db_1 = require("./db");
 const db_2 = require("./db");
 const startServer = async () => {
@@ -10,17 +9,17 @@ const startServer = async () => {
 startServer();
 exports.usersRepository = {
     // Создание пользователя (POST /users)
-    async createUser(login, email, passwordHash) {
-        const newUser = {
-            id: (0, uuid_1.v4)(),
-            login,
-            email,
-            passwordHash,
-            createdAt: new Date().toISOString(),
-        };
-        console.log('Inserting user:', newUser);
-        await db_2.usersCollection.insertOne(newUser);
-        return newUser;
+    async createUser(user) {
+        // const newUser: UserType =  {
+        //     id: uuidv4(),
+        //     login,
+        //     email,
+        //     passwordHash,
+        //     createdAt: new Date().toISOString(),
+        // };
+        console.log('Inserting user:', user);
+        await db_2.usersCollection.insertOne(user);
+        return user;
     },
     async findUserByLogin(login) {
         return db_2.usersCollection.findOne({ login });
@@ -36,6 +35,22 @@ exports.usersRepository = {
     async deletedUserssbyId(id) {
         const result = await db_2.usersCollection.deleteOne({ id: id });
         return result.deletedCount > 0;
+    },
+    async findUserByConfrimationCode(confirmationCode) {
+        return db_2.usersCollection.findOne({ confirmationCode });
+    },
+    async updateEmailStatus(userId, isConfirmed) {
+        const result = await db_2.usersCollection.updateOne({ id: userId }, { $set: { 'emailConfirmation.isConfirmed': isConfirmed } });
+        return result.modifiedCount === 1;
+    },
+    async updateConfirmationCode(userId, newCode, newExpiration) {
+        const result = await db_2.usersCollection.updateOne({ id: userId }, {
+            $set: {
+                "emailConfirmation.confirmationCode": newCode, // ОБНОВЛЕНИЕ: Устанавливаем новый код
+                "emailConfirmation.expirationDate": newExpiration // ОБНОВЛЕНИЕ: Устанавливаем новый срок действия
+            }
+        });
+        return result.modifiedCount === 1;
     },
     async findUsersList(query) {
         const { searchLoginTerm, searchEmailTerm, sortBy = 'createdAt', sortDirection = 'desc', pageNumber = 1, pageSize = 10, } = query;

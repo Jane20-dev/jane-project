@@ -1,10 +1,10 @@
 import express, {Request, Response, Router} from 'express'
 import bodyParser from "body-parser";
-import { blogRoute} from './blogs'
-import { postRoute } from './posts';
-import { userRoute } from './users';
-import { authRoute } from './auth';
-import { commentRoute } from './comments';
+import { blogRoute } from './routes/blogs';
+import { postRoute } from './routes/posts';
+import { userRoute } from './routes/users';
+import { authRoute } from './routes/auth';
+import { commentRoute } from './routes/comments';
 import {blogCollection, postsCollection, usersCollection, commentsCollection, runDb} from './repositories/db'
 
 

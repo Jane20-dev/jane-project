@@ -3,6 +3,13 @@ import { MongoClient, ObjectId } from "mongodb";
 import * as dotenv from 'dotenv'
 dotenv.config()
 
+export type BasePagination = {
+    sortBy?: string
+        sortDirection?: 'asc' | 'desc'
+        pageNumber?: number
+        pageSize?: number
+}
+
 export type BlogType ={
    
     name: string
@@ -29,6 +36,11 @@ export type UserType = {
     login: string;
     email: string;
     createdAt: string;
+    emailConfirmation: {
+        confirmationCode: string;
+        expirationDate: Date;
+        isConfirmed: boolean;
+    }
 };
 
 export type CommentatorInfoType = {

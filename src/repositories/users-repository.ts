@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import {runDb} from './db'
 import { usersCollection, UserType } from './db';
+import { promises } from 'dns';
 
 const startServer = async () =>{
     await runDb()
@@ -9,17 +10,17 @@ startServer()
 
 export const usersRepository = {
     // Создание пользователя (POST /users)
-    async createUser(login: string, email: string, passwordHash: string): Promise<UserType> {
-      const newUser: UserType = {
-          id: uuidv4(),
-          login,
-          email,
-          passwordHash,
-          createdAt: new Date().toISOString(),
-      };
-      console.log('Inserting user:', newUser);
-      await usersCollection.insertOne(newUser);
-      return newUser;
+    async createUser(user: UserType): Promise<UserType> {
+      // const newUser: UserType =  {
+      //     id: uuidv4(),
+      //     login,
+      //     email,
+      //     passwordHash,
+      //     createdAt: new Date().toISOString(),
+      // };
+      console.log('Inserting user:', user);
+      await usersCollection.insertOne(user);
+      return user;
     },
 
     async findUserByLogin(login: string): Promise<UserType | null> {
@@ -37,6 +38,37 @@ export const usersRepository = {
     async deletedUserssbyId(id: string){
             const result = await usersCollection.deleteOne({id:id})
             return result.deletedCount > 0
+    },
+
+    async findUserByConfrimationCode(confirmationCode: string): Promise<UserType | null>{
+      return usersCollection.findOne({confirmationCode})
+    },
+
+    async updateEmailStatus (userId: string, isConfirmed: boolean ): Promise<boolean>{
+      const result =  await usersCollection.updateOne(
+        {id: userId},
+        {$set: {'emailConfirmation.isConfirmed': isConfirmed}}
+        
+      );
+      return result.modifiedCount === 1;
+    },
+
+    async updateConfirmationCode(
+      userId: string,
+      newCode: string,
+      newExpiration: Date
+    ): Promise<boolean>{
+      const result = await usersCollection.updateOne(
+        {id: userId},
+        {
+
+          $set: {
+                "emailConfirmation.confirmationCode": newCode, // ОБНОВЛЕНИЕ: Устанавливаем новый код
+                    "emailConfirmation.expirationDate": newExpiration // ОБНОВЛЕНИЕ: Устанавливаем новый срок действия
+          }
+        }
+      );
+      return result.modifiedCount === 1;
     },
 
     async findUsersList(query: {
