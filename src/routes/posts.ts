@@ -102,7 +102,6 @@ postRoute.post('/:postId/comments', authenticateToken,  async (req:Request, res:
     try{
        post = await postsCollection.findOne({_id: new ObjectId(postId)});
     } catch (e){
-        console.error("Error finding post by ObjectId:", e); // Логируем ошибку, если postId невалиден
         return res.sendStatus(404);
 
     }
@@ -212,7 +211,7 @@ postRoute.put('/:id', async(req:Request, res:Response) => {
         return res.status(401).send('Unauthorized');
     }
     if (!blog){
-        //return res.status(404).send({message: 'Blog not found'})
+        
         errorsMessages.push({message: 'blog not found', field: 'blogId'})
    
     }
@@ -290,9 +289,7 @@ postRoute.delete('/:id', async (req: Request,res : Response)=>{
         return res.sendStatus(404)
     }
  
-})
-
-
+});
 
 function findPostsList(blogId: string, postData: any) {
     throw new Error('Function not implemented.');

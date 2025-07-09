@@ -8,8 +8,6 @@ import { commentRoute } from './routes/comments';
 import {blogCollection, postsCollection, usersCollection, commentsCollection, runDb} from './repositories/db'
 
 
-
-
 export const app = express()
 const port = 3000
 
@@ -32,13 +30,9 @@ app.delete('/testing/all-data', async (req: Request,res: Response) => {
 
 });
 
-
 const startApp = async()=>{
     await runDb()
 }
-
-
-
 
 
 app.listen(port, ()=> {

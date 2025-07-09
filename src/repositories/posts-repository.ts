@@ -3,7 +3,6 @@ import {ObjectId, SortDirection} from 'mongodb';
 import {postsCollection, PostType} from './db'
 import { blogCollection, BlogType } from './db';
 import {runDb} from './db'
-import { title } from 'process';
 import { BasePagination } from './db';
 
 
@@ -12,7 +11,6 @@ const startServer = async () =>{
 }
 startServer()
 
-// export const posts: { id: string; title: string; shortDescription: string; content: string; blogId: string; blogName: string; createdAt: string}[] = [];
 
 export const postsRepository = {
 
@@ -80,7 +78,6 @@ export const postsRepository = {
 
 
 
-
 //по блог айди ищем все
     async createNewPost(blogId: string, postData: {title: string; shortDescription: string; content: string; blogName: string})
     {
@@ -104,7 +101,6 @@ export const postsRepository = {
 
 
     },
-
 
 
 
@@ -134,14 +130,9 @@ export const postsRepository = {
 
  
         }
-        //пагинация и тд
-        // return await postsCollection.find({blogId}).toArray()
+       
     },
-    //{ id: string; title: string; shortDescription: string; content: string; blogId: string; blogName: string; createdAt: string; }[]
 
-
-
-    
 
 
     async findPostsbyId(id: string){
@@ -180,7 +171,6 @@ export const postsRepository = {
             return null
         }
         const newPost: PostType= {
-            // id: uuidv4(),
             title,
             shortDescription,
             content,

@@ -1,9 +1,6 @@
 import {Request, Response, Router} from 'express'
-import { app } from '../index';
-import express from 'express';
 import { blogsRepository } from '../repositories/blogs-repository';
 import { postsRepository } from '../repositories/posts-repository';
-
 
 export const blogRoute = Router();
 
@@ -31,37 +28,9 @@ blogRoute.get('/:blogId/posts', async (req: Request, res: Response) => {
 
     });
 
-    //posts - это массив или нет
-    // if (!Array.isArray(posts)) {
-    //     return res.status(500).send({ error: 'Failed to retrieve posts' });
-    // }
-
-    // фильтрую посты для текущей страницы
-    // const filteredPosts = posts.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
-
-    // const totalCount = posts.length;
-    // const pagesCount = Math.ceil(totalCount / pageSize);
-
     return res.status(200).send(posts)
-    // .send({
-    //     pagesCount: posts.pageCount,
-    //     page: posts.page,
-    //     pageSize: posts.pageSize,
-    //     totalCount: posts.totalCount,
-    //     items: posts.items
-    // });
+    
 });
-
-
-
-
-
-
-
-
-
-
-
 
 
 blogRoute.post('/:blogId/posts', async (req: Request, res: Response) => {
@@ -120,9 +89,6 @@ blogRoute.post('/:blogId/posts', async (req: Request, res: Response) => {
 
 
 
-
-
-
 blogRoute.get('/',async (req: Request, res:Response)=>{
     const queryParams = {
     sortBy: typeof req.query.sortBy === 'string' ? req.query.sortBy : "createdAt",
@@ -134,8 +100,6 @@ blogRoute.get('/',async (req: Request, res:Response)=>{
     const blogs = await  blogsRepository.findBlogsList(queryParams);
     res.status(200).send(blogs)
 }) 
-
-
 
 
 blogRoute.get('/:id', async (req: Request, res:Response)=>{
@@ -201,14 +165,6 @@ blogRoute.post('/', async (req: Request, res: Response) => {
     }
 
 });
-
-
-
-    
-    // const newBlog = blogsRepository.createBlogs(name, description, websiteUrl,createdAt,isMembership);
-    // return res.status(201).send(newBlog);
-
- 
 
 
 blogRoute.put('/:id', async (req: Request, res: Response) => {

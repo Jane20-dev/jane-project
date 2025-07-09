@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import {runDb} from './db'
 import { usersCollection, UserType } from './db';
-import { promises } from 'dns';
+import { ObjectId } from 'mongodb';
 
 const startServer = async () =>{
     await runDb()
@@ -9,16 +9,8 @@ const startServer = async () =>{
 startServer()
 
 export const usersRepository = {
-    // Создание пользователя (POST /users)
+    // Создание пользователя
     async createUser(user: UserType): Promise<UserType> {
-      // const newUser: UserType =  {
-      //     id: uuidv4(),
-      //     login,
-      //     email,
-      //     passwordHash,
-      //     createdAt: new Date().toISOString(),
-      // };
-      console.log('Inserting user:', user);
       await usersCollection.insertOne(user);
       return user;
     },
@@ -40,11 +32,8 @@ export const usersRepository = {
             return result.deletedCount > 0
     },
 
-    async findUserByConfrimationCode(confirmationCode: string): Promise<UserType | null>{
-      return usersCollection.findOne({confirmationCode})
-    },
 
-    async updateEmailStatus (userId: string, isConfirmed: boolean ): Promise<boolean>{
+     async updateEmailStatus (userId: string, isConfirmed: boolean ): Promise<boolean>{
       const result =  await usersCollection.updateOne(
         {id: userId},
         {$set: {'emailConfirmation.isConfirmed': isConfirmed}}
@@ -53,7 +42,13 @@ export const usersRepository = {
       return result.modifiedCount === 1;
     },
 
-    async updateConfirmationCode(
+    async findUserByConfrimationCode(emailConfirmationCode: string): Promise<UserType | null>{
+      const user = await usersCollection.findOne({"emailConfirmation.confirmationCode": emailConfirmationCode})
+      return user;
+    },
+
+   
+  async updateConfirmationCode(
       userId: string,
       newCode: string,
       newExpiration: Date
@@ -63,13 +58,15 @@ export const usersRepository = {
         {
 
           $set: {
-                "emailConfirmation.confirmationCode": newCode, // ОБНОВЛЕНИЕ: Устанавливаем новый код
-                    "emailConfirmation.expirationDate": newExpiration // ОБНОВЛЕНИЕ: Устанавливаем новый срок действия
+                "emailConfirmation.confirmationCode": newCode, 
+                    "emailConfirmation.expirationDate": newExpiration, 
+                    "emailConfirmation.isConfirmed": false
           }
         }
       );
       return result.modifiedCount === 1;
     },
+   
 
     async findUsersList(query: {
         searchLoginTerm?: string;

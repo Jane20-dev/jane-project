@@ -138,8 +138,6 @@ exports.blogRoute.post('/', async (req, res) => {
         return res.status(500).send('Error creating blog');
     }
 });
-// const newBlog = blogsRepository.createBlogs(name, description, websiteUrl,createdAt,isMembership);
-// return res.status(201).send(newBlog);
 exports.blogRoute.put('/:id', async (req, res) => {
     const { name, description, websiteUrl } = req.body;
     const errorsMessages = [];

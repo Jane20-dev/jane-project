@@ -1,11 +1,5 @@
 
-// 1. Создание user-service.ts
-// Этот файл будет содержать бизнес-логику:
-
-// Хэширование пароля с использованием bcrypt.
-// Проверка уникальности login и email.
-// Логика авторизации с проверкой пароля через bcrypt.
-
+// этот файл будет содержать бизнес-логику:
 import { usersRepository } from '../repositories/users-repository';
 import bcrypt from 'bcryptjs';
 import { ObjectId } from 'mongodb';
@@ -15,26 +9,26 @@ import { UserType } from '../repositories/db';
 import {add} from 'date-fns'
 import { generateAccessToken, TokenPayload } from '../utils/jwt';
 import { emailAdapter } from '../adapters/email-adapters';
+type ServiceResult<T> = T | { errorsMessages: { message: string; field: string }[] };
 
 
 
 
 export const userService = {
     async registerUser(login: string, email: string, password: string): Promise<UserType | { errorsMessages: { field: string; message: string }[] }> {
-      // Проверка уникальности login и email с помощью методов репозитория
-      //Если найдется дубликат, вернется ошибка
+    
     const errorsMessages: {field: string; message: string} [] = [];
 
     const userByLogin = await usersRepository.findUserByLogin(login);
     if (userByLogin){
-     errorsMessages.push({field: 'login', message: 'login should be unique' });
+     return {errorsMessages: [{message: 'Пользователь с таким login уже существует.', field: 'login'}]}
 
     }
     const userByEmail = await usersRepository.findUserByEmail(email);
     if(userByEmail){
-        errorsMessages.push({field: 'email', message: 'email should be unique'});
-
+       return {errorsMessages: [{message: 'Пользователь с таким email уже существует.', field: 'email'}]}
     }
+
     if(errorsMessages.length > 0){
         return{errorsMessages};
     }
@@ -88,17 +82,38 @@ export const userService = {
     return newUser
 },  
 
+   async confirmEmail(confirmationCode: string): Promise<boolean>{
+      
+
+    const user = await usersRepository.findUserByConfrimationCode(confirmationCode);
+    console.log(`[UserService.confirmEmail] Attempting to confirm email with code: '${confirmationCode}'`);
+    if(!user || user.emailConfirmation.isConfirmed || user.emailConfirmation.expirationDate < new Date()){
+        return false
+    }
+
+    console.log(`[ConfirmEmail Service] Пользователь найден: ${user.login} (${user.email})`);
+    console.log(`[ConfirmEmail Service] Код в БД: ${user.emailConfirmation.confirmationCode}`);
+    console.log(`[ConfirmEmail Service] Срок действия кода (в БД): ${user.emailConfirmation.expirationDate ? user.emailConfirmation.expirationDate.toISOString() : 'N/A'}`);
+    console.log(`[ConfirmEmail Service] Текущее время (сейчас): ${new Date().toISOString()}`);
+
+    const updated = await usersRepository.updateEmailStatus(user.id, true);
+    return updated
+
+},
+
 
     async loginUser(loginOrEmail: string, password: string): Promise<string | null>{
+        console.log(`[UserService.loginUser] Attempting login for: '${loginOrEmail}'`);
         const user = await usersRepository.findUserByLoginOrEmail(loginOrEmail);
         if(!user){
             return null;
         }
-
         const isMatch = await bcrypt.compare(password, user.passwordHash);
         if(!isMatch){
+            console.warn(`[UserService.loginUser] Login failed for '${user.login}': Password mismatch.`);
             return null;
         }
+       
 
         const tokenPayload: TokenPayload = {
         userId: user.id,
@@ -109,23 +124,18 @@ export const userService = {
         const token = generateAccessToken(tokenPayload)
         return token;
 },
-    async confirmEmail(confirmationCode: string): Promise<boolean>{
-        //ищу юзера по коду подтверждения
-    const user = await usersRepository.findUserByConfrimationCode(confirmationCode);
 
-    if(!user || user.emailConfirmation.isConfirmed || user.emailConfirmation.expirationDate < new Date()){
-        return false
-    }
 
-    const updated = await usersRepository.updateEmailStatus(user.id, true);
-    return updated
-
-},
-    async resendCode(email: string): Promise<boolean>{
+   async resendCode(email: string): Promise<ServiceResult<void>>{
         const user = await usersRepository.findUserByEmail(email);
 
-        if(!user || user.emailConfirmation.isConfirmed){
-            return false;
+        if(!user){
+            return { errorsMessages: [{ message: 'User with this email does not exist.', field: 'email' }] };
+        }
+
+        if(user.emailConfirmation.isConfirmed){
+            console.warn(`[UserService.resendConfirmationEmail] Email '${email}' is already confirmed. Cannot resend.`);
+            return {errorsMessages: [{message: 'Email is already confirmed.', field: 'email'}]};
         }
 
         const newCode = uuidv4();
@@ -138,10 +148,10 @@ export const userService = {
         );
 
         if(!updateInDb){
-            return false
+            return { errorsMessages: [{ message: 'Failed to update confirmation data.', field: 'email' }] };
         }
 
-        const FRONTEND_CONFIRM_URL = process.env.FRONTEND_CONFIRM_URL || 'http://localhost:3000/confirm-email';
+        const FRONTEND_CONFIRM_URL = process.env.FRONTEND_CONFIRM_URL;
         const confirmationLink = `${FRONTEND_CONFIRM_URL}?code=${newCode}`;
 
         try {
@@ -153,13 +163,14 @@ export const userService = {
                  <a href='${confirmationLink}'>Подтвердить email</a>
                  <p>Если вы не запрашивали это, просто проигнорируйте это письмо.</p>`
             )
+            return;
         } catch (emailError) {
             console.error('Error sending resend email:', emailError);
-            return false; 
+            return { errorsMessages: [{ message: 'Failed to send confirmation email.', field: 'email' }] };
             
         }
-        return true;
-    }
+        
+}
 
 };
 

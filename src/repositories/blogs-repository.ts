@@ -10,10 +10,6 @@ const startServer = async () =>{
 }
 startServer()
 
-
-// export const blogs: { id: string; name: any; description: any; websiteUrl: any; createdAt : string; isMembership: boolean}[] = []
-
-
 export const blogsRepository = {
 
     async findBlogsList(query:{
@@ -87,7 +83,6 @@ export const blogsRepository = {
     async createBlogs(name:any, description : any, websiteUrl: any,createdAt : any, isMembership: boolean){
        
         const newBlog: BlogType = {
-            // id: uuidv4(),
             name,
             description,
             websiteUrl,
@@ -96,7 +91,7 @@ export const blogsRepository = {
         };
 
     
-        const createdBlog = await blogCollection.insertOne(newBlog); // Возвращаем созданный блог
+        const createdBlog = await blogCollection.insertOne(newBlog); 
        
         return {
             name: newBlog.name, 
@@ -121,15 +116,6 @@ export const blogsRepository = {
                 return false
             }
 
-
-
-            // const blogIndex = blogs.findIndex(b => b.id === id);
-            // if (blogIndex !== -1) {
-            //     blogs[blogIndex] = { ...blogs[blogIndex], name, description, websiteUrl };
-            //     return true; // Успешное обновление
-            // } else {
-            //     return false; // Блог не найден
-            // }
     
     },
         async deletedBlogs(){
@@ -140,9 +126,6 @@ export const blogsRepository = {
             const result = await blogCollection.deleteOne({_id: new ObjectId(id)})
             return result.deletedCount > 0
             
-           
-            
-
 
         }
 }

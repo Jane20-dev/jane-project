@@ -8,16 +8,8 @@ const startServer = async () => {
 };
 startServer();
 exports.usersRepository = {
-    // Создание пользователя (POST /users)
+    // Создание пользователя
     async createUser(user) {
-        // const newUser: UserType =  {
-        //     id: uuidv4(),
-        //     login,
-        //     email,
-        //     passwordHash,
-        //     createdAt: new Date().toISOString(),
-        // };
-        console.log('Inserting user:', user);
         await db_2.usersCollection.insertOne(user);
         return user;
     },
@@ -36,18 +28,20 @@ exports.usersRepository = {
         const result = await db_2.usersCollection.deleteOne({ id: id });
         return result.deletedCount > 0;
     },
-    async findUserByConfrimationCode(confirmationCode) {
-        return db_2.usersCollection.findOne({ confirmationCode });
-    },
     async updateEmailStatus(userId, isConfirmed) {
         const result = await db_2.usersCollection.updateOne({ id: userId }, { $set: { 'emailConfirmation.isConfirmed': isConfirmed } });
         return result.modifiedCount === 1;
     },
+    async findUserByConfrimationCode(emailConfirmationCode) {
+        const user = await db_2.usersCollection.findOne({ "emailConfirmation.confirmationCode": emailConfirmationCode });
+        return user;
+    },
     async updateConfirmationCode(userId, newCode, newExpiration) {
         const result = await db_2.usersCollection.updateOne({ id: userId }, {
             $set: {
-                "emailConfirmation.confirmationCode": newCode, // ОБНОВЛЕНИЕ: Устанавливаем новый код
-                "emailConfirmation.expirationDate": newExpiration // ОБНОВЛЕНИЕ: Устанавливаем новый срок действия
+                "emailConfirmation.confirmationCode": newCode,
+                "emailConfirmation.expirationDate": newExpiration,
+                "emailConfirmation.isConfirmed": false
             }
         });
         return result.modifiedCount === 1;

@@ -16,7 +16,6 @@ export interface PagedComments {
     page: number;
     pageSize: number;
     totalCount: number;
-    //also add
     items: CommentType[]
 }
 
@@ -46,19 +45,11 @@ export const commentsRepository = {
 
         const {_id, postId: commentPostIdFromDb, ...commentForClient} = newCommentToInsert as any;
 
-        // const createdComment: CommentType = {
-        //     id: newCommentToInsert.id,
-        //     content: newCommentToInsert.content,
-        //     commentatorInfo: newCommentToInsert.commentatorInfo,
-        //     createdAt: newCommentToInsert.createdAt,
-
-           
-        // };
     return commentForClient as CommentResponseClientType;
 
 
     } catch (error) {
-        console.error("Репозиторий: ОШИБКА при вставке комментария:", error); // Важно: есть ли тут логи?
+        console.error("Репозиторий: ОШИБКА при вставке комментария:", error); 
         return null; 
     }
 },
@@ -93,16 +84,14 @@ query: {
                 .limit(pageSize)
                 .toArray();
 
-            // Получаем общее количество документов по фильтру
             const totalCount = await commentsCollection.countDocuments(filter);
 
-            // Форматируем комментарии, исключая _id и postId, как и ранее
             const formattedComments = comments.map(comment => {
-                const { _id, postId,...rest } = comment; // postId переименован во избежание конфликта
+                const { _id, postId,...rest } = comment; 
                 return rest as CommentType;
             });
 
-            // Возвращаем объект пагинации, как в вашем usersRepository
+          
             return {
                 pagesCount: Math.ceil(totalCount / pageSize),
                 page: pageNumber,
@@ -140,7 +129,7 @@ async updateCommentById(commentId: string, content: string): Promise <boolean>{
         }
     }
     const result = await commentsCollection.updateOne(filter, updateDoc);
-    return result.matchedCount === 1; //проверяем что был найден и обновлен один коммент
+    return result.matchedCount === 1; 
 },
 
 async deleteCommentById(commentId: string){
@@ -149,5 +138,4 @@ async deleteCommentById(commentId: string){
 }
 }
 
-//createComment
-//deleteComment
+

@@ -6,7 +6,7 @@ import { TokenPayload } from "../utils/jwt";
 
 declare module 'express-serve-static-core' {
   interface Request {
-    user?: TokenPayload;
+    user?: TokenPayload ;
   }
 }
 export const commentRoute = Router();
@@ -93,15 +93,11 @@ commentRoute.put('/:commentId',authenticateToken, async(req: Request, res: Respo
         if(!updateComment){
             return res.status(404).send({message: 'Cannot update comment'})
         }
-        return res.status(204).send({message:'Comment is updated!'})
+        return res.status(204).send()
 
     } catch (error) {
         console.error("Error updt comment:", error);
         return res.status(500).send('Error updt commnet')
     }
 })
-
-
-//commentRoute.update(id)
-//commentRoute.delete(id)
 

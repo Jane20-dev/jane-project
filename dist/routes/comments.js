@@ -74,7 +74,7 @@ exports.commentRoute.put('/:commentId', auth_1.authenticateToken, async (req, re
         if (!updateComment) {
             return res.status(404).send({ message: 'Cannot update comment' });
         }
-        return res.status(204).send({ message: 'Comment is updated!' });
+        return res.status(204).send();
     }
     catch (error) {
         console.error("Error updt comment:", error);
