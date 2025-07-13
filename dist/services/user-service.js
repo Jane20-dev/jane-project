@@ -9,7 +9,6 @@ const users_repository_1 = require("../repositories/users-repository");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const uuid_1 = require("uuid");
 const date_fns_1 = require("date-fns");
-const jwt_1 = require("../utils/jwt");
 const email_adapters_1 = require("../adapters/email-adapters");
 exports.userService = {
     async registerUser(login, email, password) {
@@ -76,27 +75,20 @@ exports.userService = {
         return updated;
     },
     async loginUser(loginOrEmail, password) {
-        console.log(`[UserService.loginUser] Attempting login for: '${loginOrEmail}'`);
         const user = await users_repository_1.usersRepository.findUserByLoginOrEmail(loginOrEmail);
-        if (!user) {
+        if (!user)
             return null;
-        }
-        // if (!user.emailConfirmation || !user.emailConfirmation.isConfirmed) {
-        // console.log(`[Login Service] Email пользователя ${user.login} (${user.email}) не подтвержден.`);
-        // return null; // Email не подтвержден
-        //  }
         const isMatch = await bcryptjs_1.default.compare(password, user.passwordHash);
-        if (!isMatch) {
-            console.warn(`[UserService.loginUser] Login failed for '${user.login}': Password mismatch.`);
+        if (!isMatch)
             return null;
-        }
-        const tokenPayload = {
-            userId: user.id,
-            email: user.email,
-            userLogin: user.login
-        };
-        const token = (0, jwt_1.generateAccessToken)(tokenPayload);
-        return token;
+        return user;
+        //     const tokenPayload: TokenPayload = {
+        //     userId: user.id,
+        //     email: user.email,
+        //     userLogin: user.login
+        // };
+        //     const token = generateAccessToken(tokenPayload)
+        //     return token;
     },
     async resendCode(email) {
         const user = await users_repository_1.usersRepository.findUserByEmail(email);
@@ -126,5 +118,20 @@ exports.userService = {
             console.error('Error sending resend email:', emailError);
             return { errorsMessages: [{ message: 'Failed to send confirmation email.', field: 'email' }] };
         }
+    },
+    async saveRefreshToken(userId, refreshToken) {
+        const isUpdated = await users_repository_1.usersRepository.updatedRefreshToken(userId, refreshToken);
+        return isUpdated;
+    },
+    async findRefreshTokeninDb(refreshToken) {
+        const isFound = await users_repository_1.usersRepository.findRefreshTokenInDb(refreshToken);
+        return isFound;
+    },
+    async revokeRefreshToken(refreshToken) {
+        const user = await users_repository_1.usersRepository.findUserByRefreshToken(refreshToken);
+        if (!user)
+            return false;
+        const isLogout = await users_repository_1.usersRepository.updatedRefreshToken(user.id, null);
+        return isLogout;
     }
 };

@@ -15,10 +15,12 @@ export const usersRepository = {
       return user;
     },
 
+    async findUserById(userId: string): Promise<UserType | null>{
+      return usersCollection.findOne({userId});
+    },
     async findUserByLogin(login: string): Promise<UserType | null> {
         return usersCollection.findOne({ login });
     },
-    
     async findUserByEmail(email: string): Promise<UserType | null> {
         return usersCollection.findOne({ email });
     },
@@ -31,8 +33,6 @@ export const usersRepository = {
             const result = await usersCollection.deleteOne({id:id})
             return result.deletedCount > 0
     },
-
-
      async updateEmailStatus (userId: string, isConfirmed: boolean ): Promise<boolean>{
       const result =  await usersCollection.updateOne(
         {id: userId},
@@ -41,14 +41,11 @@ export const usersRepository = {
       );
       return result.modifiedCount === 1;
     },
-
     async findUserByConfrimationCode(emailConfirmationCode: string): Promise<UserType | null>{
       const user = await usersCollection.findOne({"emailConfirmation.confirmationCode": emailConfirmationCode})
       return user;
     },
-
-   
-  async updateConfirmationCode(
+    async updateConfirmationCode(
       userId: string,
       newCode: string,
       newExpiration: Date
@@ -66,8 +63,6 @@ export const usersRepository = {
       );
       return result.modifiedCount === 1;
     },
-   
-
     async findUsersList(query: {
         searchLoginTerm?: string;
         searchEmailTerm?: string;
@@ -124,4 +119,21 @@ export const usersRepository = {
             })),
           };
     },
+
+
+    
+    async updatedRefreshToken(userId: string, newRefreshToken : string | null): Promise<boolean> {
+      const result = await usersCollection.updateOne(
+        {id: userId},
+        {$set:{refreshToken: newRefreshToken}}
+      );
+      return result.modifiedCount === 1;
+    },
+    async findUserByRefreshToken(refreshToken: string): Promise<UserType | null> {
+      return usersCollection.findOne({refreshToken: refreshToken});
+    },
+    async findRefreshTokenInDb(refreshToken: string):Promise<UserType|null> {
+      return usersCollection.findOne({refreshToken: refreshToken})
+    },
+   
 };

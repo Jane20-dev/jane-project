@@ -25,16 +25,10 @@ exports.commentsRepository = {
         try {
             await db_2.commentsCollection.insertOne(newCommentToInsert);
             const { _id, postId: commentPostIdFromDb, ...commentForClient } = newCommentToInsert;
-            // const createdComment: CommentType = {
-            //     id: newCommentToInsert.id,
-            //     content: newCommentToInsert.content,
-            //     commentatorInfo: newCommentToInsert.commentatorInfo,
-            //     createdAt: newCommentToInsert.createdAt,
-            // };
             return commentForClient;
         }
         catch (error) {
-            console.error("Репозиторий: ОШИБКА при вставке комментария:", error); // Важно: есть ли тут логи?
+            console.error("Репозиторий: ОШИБКА при вставке комментария:", error);
             return null;
         }
     },
@@ -53,14 +47,11 @@ exports.commentsRepository = {
                 .skip((pageNumber - 1) * pageSize)
                 .limit(pageSize)
                 .toArray();
-            // Получаем общее количество документов по фильтру
             const totalCount = await db_2.commentsCollection.countDocuments(filter);
-            // Форматируем комментарии, исключая _id и postId, как и ранее
             const formattedComments = comments.map(comment => {
-                const { _id, postId, ...rest } = comment; // postId переименован во избежание конфликта
+                const { _id, postId, ...rest } = comment;
                 return rest;
             });
-            // Возвращаем объект пагинации, как в вашем usersRepository
             return {
                 pagesCount: Math.ceil(totalCount / pageSize),
                 page: pageNumber,
@@ -91,11 +82,9 @@ exports.commentsRepository = {
             }
         };
         const result = await db_2.commentsCollection.updateOne(filter, updateDoc);
-        return result.matchedCount === 1; //проверяем что был найден и обновлен один коммент
+        return result.matchedCount === 1;
     },
     async deleteCommentById(commentId) {
         return await db_2.commentsCollection.deleteOne({ id: commentId });
     }
 };
-//createComment
-//deleteComment

@@ -6,11 +6,13 @@ import { userRoute } from './routes/users';
 import { authRoute } from './routes/auth';
 import { commentRoute } from './routes/comments';
 import {blogCollection, postsCollection, usersCollection, commentsCollection, runDb} from './repositories/db'
+import cookieParser from 'cookie-parser';
 
 
 export const app = express()
 const port = 3000
 
+app.use(cookieParser());
 app.use(bodyParser.json());
 
 app.use('/auth', authRoute);

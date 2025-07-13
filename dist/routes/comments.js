@@ -81,5 +81,3 @@ exports.commentRoute.put('/:commentId', auth_1.authenticateToken, async (req, re
         return res.status(500).send('Error updt commnet');
     }
 });
-//commentRoute.update(id)
-//commentRoute.delete(id)

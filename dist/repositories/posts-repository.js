@@ -10,7 +10,6 @@ const startServer = async () => {
     await (0, db_3.runDb)();
 };
 startServer();
-// export const posts: { id: string; title: string; shortDescription: string; content: string; blogId: string; blogName: string; createdAt: string}[] = [];
 exports.postsRepository = {
     async findPostsList(query) {
         const allPosts = await db_1.postsCollection.find().toArray();
@@ -97,10 +96,7 @@ exports.postsRepository = {
                 blogName: post.blogName
             }))
         };
-        //пагинация и тд
-        // return await postsCollection.find({blogId}).toArray()
     },
-    //{ id: string; title: string; shortDescription: string; content: string; blogId: string; blogName: string; createdAt: string; }[]
     async findPostsbyId(id) {
         const post = await db_1.postsCollection.findOne({ _id: new mongodb_1.ObjectId(id) });
         console.log(post, " post");
@@ -128,7 +124,6 @@ exports.postsRepository = {
             return null;
         }
         const newPost = {
-            // id: uuidv4(),
             title,
             shortDescription,
             content,

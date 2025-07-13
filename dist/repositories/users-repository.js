@@ -13,6 +13,9 @@ exports.usersRepository = {
         await db_2.usersCollection.insertOne(user);
         return user;
     },
+    async findUserById(userId) {
+        return db_2.usersCollection.findOne({ userId });
+    },
     async findUserByLogin(login) {
         return db_2.usersCollection.findOne({ login });
     },
@@ -81,5 +84,15 @@ exports.usersRepository = {
                 createdAt: user.createdAt,
             })),
         };
+    },
+    async updatedRefreshToken(userId, newRefreshToken) {
+        const result = await db_2.usersCollection.updateOne({ id: userId }, { $set: { refreshToken: newRefreshToken } });
+        return result.modifiedCount === 1;
+    },
+    async findUserByRefreshToken(refreshToken) {
+        return db_2.usersCollection.findOne({ refreshToken: refreshToken });
+    },
+    async findRefreshTokenInDb(refreshToken) {
+        return db_2.usersCollection.findOne({ refreshToken: refreshToken });
     },
 };

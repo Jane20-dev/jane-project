@@ -8,7 +8,6 @@ const startServer = async () => {
     await (0, db_2.runDb)();
 };
 startServer();
-// export const blogs: { id: string; name: any; description: any; websiteUrl: any; createdAt : string; isMembership: boolean}[] = []
 exports.blogsRepository = {
     async findBlogsList(query) {
         //получаю все блоги
@@ -70,14 +69,13 @@ exports.blogsRepository = {
     },
     async createBlogs(name, description, websiteUrl, createdAt, isMembership) {
         const newBlog = {
-            // id: uuidv4(),
             name,
             description,
             websiteUrl,
             createdAt: new Date(),
             isMembership: false,
         };
-        const createdBlog = await db_1.blogCollection.insertOne(newBlog); // Возвращаем созданный блог
+        const createdBlog = await db_1.blogCollection.insertOne(newBlog);
         return {
             name: newBlog.name,
             description: newBlog.description,
@@ -95,13 +93,6 @@ exports.blogsRepository = {
         else {
             return false;
         }
-        // const blogIndex = blogs.findIndex(b => b.id === id);
-        // if (blogIndex !== -1) {
-        //     blogs[blogIndex] = { ...blogs[blogIndex], name, description, websiteUrl };
-        //     return true; // Успешное обновление
-        // } else {
-        //     return false; // Блог не найден
-        // }
     },
     async deletedBlogs() {
         return await db_1.blogCollection.deleteMany({});

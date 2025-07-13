@@ -7,7 +7,7 @@ import { Jwt } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { UserType } from '../repositories/db';
 import {add} from 'date-fns'
-import { generateAccessToken, TokenPayload } from '../utils/jwt';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken, TokenPayload } from '../utils/jwt';
 import { emailAdapter } from '../adapters/email-adapters';
 type ServiceResult<T> = T | { errorsMessages: { message: string; field: string }[] };
 
@@ -102,27 +102,25 @@ export const userService = {
 },
 
 
-    async loginUser(loginOrEmail: string, password: string): Promise<string | null>{
-        console.log(`[UserService.loginUser] Attempting login for: '${loginOrEmail}'`);
+    async loginUser(loginOrEmail: string, password: string): Promise<UserType| null>{
+
         const user = await usersRepository.findUserByLoginOrEmail(loginOrEmail);
-        if(!user){
-            return null;
-        }
+        if(!user) return null;
+
         const isMatch = await bcrypt.compare(password, user.passwordHash);
-        if(!isMatch){
-            console.warn(`[UserService.loginUser] Login failed for '${user.login}': Password mismatch.`);
-            return null;
-        }
-       
+        if(!isMatch) return null;
+        
+       return user
 
-        const tokenPayload: TokenPayload = {
-        userId: user.id,
-        email: user.email,
-        userLogin: user.login
-    };
+    //     const tokenPayload: TokenPayload = {
+    //     userId: user.id,
+    //     email: user.email,
+    //     userLogin: user.login
+    // };
 
-        const token = generateAccessToken(tokenPayload)
-        return token;
+    //     const token = generateAccessToken(tokenPayload)
+    //     return token;
+    
 },
 
 
@@ -170,7 +168,31 @@ export const userService = {
             
         }
         
-}
+},
+
+
+
+    async saveRefreshToken(userId: string, refreshToken: string): Promise<boolean>{
+        const isUpdated = await usersRepository.updatedRefreshToken(userId, refreshToken)
+        return isUpdated
+},
+
+    async findRefreshTokeninDb(refreshToken: string):Promise<UserType| null>{
+        const isFound = await usersRepository.findRefreshTokenInDb(refreshToken)
+        return isFound
+},
+
+    async revokeRefreshToken(refreshToken: string): Promise<boolean>{
+        const user = await usersRepository.findUserByRefreshToken(refreshToken)
+        if(!user) return false;
+
+        const isLogout = await usersRepository.updatedRefreshToken(user.id, null);
+        return isLogout;
+    }
+
+  
+
+
 
 };
 

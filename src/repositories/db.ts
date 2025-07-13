@@ -40,7 +40,9 @@ export type UserType = {
         confirmationCode: string;
         expirationDate: Date;
         isConfirmed: boolean;
-    }
+    };
+    refreshToken?: string | null
+    
 };
 
 export type CommentatorInfoType = {

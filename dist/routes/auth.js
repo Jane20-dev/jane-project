@@ -4,6 +4,8 @@ exports.authenticateToken = exports.authRoute = void 0;
 const express_1 = require("express");
 const user_service_1 = require("../services/user-service");
 const jwt_1 = require("../utils/jwt");
+const express_validator_1 = require("express-validator");
+const auth_validation_1 = require("../validation/auth-validation");
 exports.authRoute = (0, express_1.Router)();
 // --- Middleware для аутентификации JWT токена ---
 const authenticateToken = (req, res, next) => {
@@ -22,7 +24,7 @@ const authenticateToken = (req, res, next) => {
             return res.status(401).json({ message: 'Недействительный или просроченный токен.' });
         }
         req.user = decodedPayload;
-        return next(); // Передаем управление дальше, только если все в порядке
+        return next();
     }
     catch (error) {
         console.error(`[authenticateToken] Token verification failed:`, error);
@@ -36,47 +38,12 @@ const authenticateToken = (req, res, next) => {
     }
 };
 exports.authenticateToken = authenticateToken;
-exports.authRoute.post('/registration', async (req, res) => {
+exports.authRoute.post('/registration', auth_validation_1.registerValidation, async (req, res) => {
     const { login, email, password } = req.body;
-    console.log(`[Auth Route] POST /registration request received. Raw body: ${JSON.stringify(req.body)}`);
-    console.log(`[Auth Route] Parsed body: login='${login}', email='${email}'`);
-    const errorsMessages = [];
-    // Валидация login
-    if (!login || login.trim().length === 0 || login.length < 3 || login.length > 10 || !/^[a-zA-Z0-9_-]*$/.test(login)) {
-        errorsMessages.push({ message: 'not valid login', field: 'login' });
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
-    // Валидация email
-    if (!email || email.trim().length === 0 || !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-        errorsMessages.push({ message: 'not valid email', field: 'email' });
-    }
-    // Валидация password
-    if (!password || typeof password !== 'string' || password.trim().length === 0 || password.length < 6 || password.length > 20) {
-        errorsMessages.push({ message: 'not valid password', field: 'password' });
-    }
-    if (errorsMessages.length > 0) {
-        return res.status(400).send({ errorsMessages });
-    }
-    // if (!login || typeof login !== 'string' || login.trim().length === 0) {
-    //     errorsMessages.push({ message: 'Login is required.', field: 'login' });
-    // } else if (login.length < 3 || login.length > 10) {
-    //     errorsMessages.push({ message: 'Login must be between 3 and 10 characters long.', field: 'login' });
-    // } else if (!/^[a-zA-Z0-9_-]*$/.test(login)) {
-    //     errorsMessages.push({ message: 'Login must contain only letters, numbers, hyphens, or underscores.', field: 'login' });
-    // }
-    // if (!password || typeof password !== 'string' || password.trim().length === 0) {
-    //     errorsMessages.push({ message: 'Password is required.', field: 'password' });
-    // } else if (password.length < 6 || password.length > 20) {
-    //     errorsMessages.push({ message: 'Password must be between 6 and 20 characters long.', field: 'password' });
-    // }
-    // const emailPattern = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-    // if (!email || typeof email !== 'string' || email.trim().length === 0) {
-    //     errorsMessages.push({ message: 'Email is required.', field: 'email' });
-    // } else if (!emailPattern.test(email)) {
-    //     errorsMessages.push({ message: 'Email must be a valid email address.', field: 'email' });
-    // }
-    // if (errorsMessages.length > 0){
-    //   return res.status(400).send({errorsMessages});
-    // }
     try {
         const registrationUser = await user_service_1.userService.registerUser(login, email, password);
         if ('errorsMessages' in registrationUser) {
@@ -89,15 +56,19 @@ exports.authRoute.post('/registration', async (req, res) => {
         return res.status(500).json({ message: 'Error during registration' });
     }
 });
-exports.authRoute.post('/registration-confirmation', async (req, res) => {
+exports.authRoute.post('/registration-confirmation', auth_validation_1.confirmationValidation, async (req, res) => {
     const { code } = req.body;
-    const errorsMessages = [];
-    if (!code || typeof code !== 'string' || code.trim().length === 0) {
-        errorsMessages.push({ message: 'Confirmation code is required', field: 'code' });
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
-    if (errorsMessages.length > 0) {
-        return res.status(400).send({ errorsMessages });
-    }
+    // const errorsMessages = []
+    // if(!code || typeof code !== 'string' || code.trim().length === 0 ){
+    //   errorsMessages.push({ message: 'Confirmation code is required', field: 'code' });
+    // }
+    // if (errorsMessages.length > 0){
+    //   return res.status(400).send({errorsMessages});
+    // }
     try {
         const isConfirmed = await user_service_1.userService.confirmEmail(code);
         if (isConfirmed) {
@@ -114,15 +85,19 @@ exports.authRoute.post('/registration-confirmation', async (req, res) => {
         return res.status(500).json({ message: 'Error during confirmation' });
     }
 });
-exports.authRoute.post('/registration-email-resending', async (req, res) => {
+exports.authRoute.post('/registration-email-resending', auth_validation_1.resendingValidation, async (req, res) => {
     const { email } = req.body;
-    const errorsMessages = [];
-    if (!email || typeof email !== 'string' || email.trim().length === 0) {
-        errorsMessages.push({ message: 'not valid email', field: 'email' });
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
-    if (errorsMessages.length > 0) {
-        return res.status(400).send({ errorsMessages });
-    }
+    // const errorsMessages = []
+    // if (!email || typeof email !== 'string' || email.trim().length === 0) {
+    //   errorsMessages.push({ message: 'not valid email', field: 'email' });
+    // }
+    // if (errorsMessages.length > 0){
+    //   return res.status(400).send({errorsMessages});
+    // }
     try {
         const resendCodetoEmail = await user_service_1.userService.resendCode(email);
         if (resendCodetoEmail && 'errorsMessages' in resendCodetoEmail) {
@@ -142,32 +117,103 @@ exports.authRoute.get('/me', exports.authenticateToken, async (req, res) => {
     }
     res.status(200).json({
         userId: req.user.userId,
-        userLogin: req.user.userLogin
+        email: req.user.email,
+        login: req.user.userLogin
     });
     return true;
 });
-exports.authRoute.post('/login', async (req, res) => {
+exports.authRoute.post('/login', auth_validation_1.loginValidation, async (req, res) => {
     const { loginOrEmail, password } = req.body;
-    const errorsMessages = [];
-    if (!loginOrEmail || loginOrEmail.trim().length === 0) {
-        errorsMessages.push({ message: 'not valid login or email', field: 'loginOrEmail' });
-    }
-    if (!password || typeof password !== 'string' || password.trim().length === 0) {
-        errorsMessages.push({ message: 'not valid password', field: 'password' });
-    }
-    if (errorsMessages.length > 0) {
-        return res.status(400).send({ errorsMessages });
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
     try {
-        const token = await user_service_1.userService.loginUser(loginOrEmail, password);
-        if (!token) {
+        const user = await user_service_1.userService.loginUser(loginOrEmail, password);
+        if (!user) {
             return res.status(401).send('Unauthorized');
         }
-        res.status(200).send({ accessToken: token });
+        const tokenPayload = {
+            userId: user.id,
+            userLogin: user.login,
+            email: user.email
+        };
+        const accessToken = (0, jwt_1.generateAccessToken)(tokenPayload);
+        const refreshToken = (0, jwt_1.generateRefreshToken)(tokenPayload);
+        await user_service_1.userService.saveRefreshToken(user.id, refreshToken);
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: true,
+            maxAge: 20 * 1000,
+        });
+        res.status(200).json({ accessToken: accessToken });
     }
     catch (error) {
         console.log(error, ' error');
         res.status(500).send('Error during login');
+    }
+    return true;
+});
+exports.authRoute.post('/refresh-token', async (req, res) => {
+    const refreshTokenFromCookie = req.cookies.refreshToken;
+    if (!refreshTokenFromCookie)
+        return res.status(401).send('Unauthorized');
+    try {
+        const decodedPayload = (0, jwt_1.verifyAccessToken)(refreshTokenFromCookie);
+        if (!decodedPayload || !decodedPayload.jti) {
+            res.clearCookie('refreshToken');
+            return res.status(401).send('Unauthorized');
+        }
+        const user = await user_service_1.userService.findRefreshTokeninDb(refreshTokenFromCookie);
+        if (!user) {
+            res.clearCookie('refreshToken');
+            return res.status(401).send('Unauthorized');
+        }
+        const newAccessToken = (0, jwt_1.generateAccessToken)({
+            userId: user.id,
+            userLogin: user.login,
+            email: user.email
+        });
+        const newRefreshToken = (0, jwt_1.generateRefreshToken)({
+            userId: user.id,
+            userLogin: user.login,
+            email: user.email
+        });
+        await user_service_1.userService.saveRefreshToken(user.id, newRefreshToken);
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            secure: true,
+            maxAge: 20 * 1000,
+        });
+        res.status(200).json({ accessToken: newAccessToken });
+    }
+    catch (error) {
+        res.clearCookie('refreshToken');
+        return res.status(401).send('Unauthorized');
+    }
+    return true;
+});
+exports.authRoute.post('/logout', async (req, res) => {
+    const refreshTokenFromCookie = req.cookies.refreshToken;
+    if (!refreshTokenFromCookie)
+        return res.status(401).send('1. Unauthorized');
+    try {
+        const checkThisRefreshToken = (0, jwt_1.verifyAccessToken)(refreshTokenFromCookie);
+        if (!checkThisRefreshToken || !checkThisRefreshToken.jti) {
+            res.clearCookie('refreshToken');
+            return res.status(401).send('2. Unauthorized');
+        }
+        const isLogout = await user_service_1.userService.revokeRefreshToken(refreshTokenFromCookie);
+        if (!isLogout) {
+            res.clearCookie('refreshToken');
+            return res.status(401).send('3. Unauthorized');
+        }
+        res.clearCookie('refreshToken');
+        res.status(204).send();
+    }
+    catch (error) {
+        res.clearCookie('refreshToken');
+        res.status(401).send('4. Unauthorized');
     }
     return true;
 });

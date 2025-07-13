@@ -2,10 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.videos = void 0;
 const index_1 = require("./index");
-//const app = express()
-//const port = 3003
-// app.use(bodyParser.urlencoded({ extended: false }));
-//app.use(bodyParser.json());
 exports.videos = [];
 const availableResolutions = ['P144', 'P240', 'P360', 'P480', 'P720', 'P1080', 'P1440', 'P2160'];
 index_1.app.post('/videos', (req, res) => {
@@ -23,8 +19,6 @@ index_1.app.post('/videos', (req, res) => {
     else if (inputedData.author.length > 20) {
         errorsMessages.push({ message: "Author is required", field: "author" });
     }
-    // если элементы входнного массива не соответсвуют элементам эталонного массива , то кладем ошибку в errorsMessage
-    // if (проверка) [ P144, P240, P360, P480, P720, P1080, P1440, P2160 ]
     if (!inputedData.availableResolutions.every((resolution) => availableResolutions.includes(resolution))) {
         errorsMessages.push({ message: "Invalid resolution provided", field: "availableResolutions" });
     }

@@ -25,22 +25,7 @@ exports.blogRoute.get('/:blogId/posts', async (req, res) => {
             ? req.query.sortDirection
             : "desc",
     });
-    //posts - это массив или нет
-    // if (!Array.isArray(posts)) {
-    //     return res.status(500).send({ error: 'Failed to retrieve posts' });
-    // }
-    // фильтрую посты для текущей страницы
-    // const filteredPosts = posts.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
-    // const totalCount = posts.length;
-    // const pagesCount = Math.ceil(totalCount / pageSize);
     return res.status(200).send(posts);
-    // .send({
-    //     pagesCount: posts.pageCount,
-    //     page: posts.page,
-    //     pageSize: posts.pageSize,
-    //     totalCount: posts.totalCount,
-    //     items: posts.items
-    // });
 });
 exports.blogRoute.post('/:blogId/posts', async (req, res) => {
     const blogId = req.params.blogId;

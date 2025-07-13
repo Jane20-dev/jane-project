@@ -86,7 +86,6 @@ exports.postRoute.post('/:postId/comments', auth_1.authenticateToken, async (req
         post = await db_2.postsCollection.findOne({ _id: new mongodb_1.ObjectId(postId) });
     }
     catch (e) {
-        console.error("Error finding post by ObjectId:", e); // Логируем ошибку, если postId невалиден
         return res.sendStatus(404);
     }
     if (!post) {
@@ -173,7 +172,6 @@ exports.postRoute.put('/:id', async (req, res) => {
         return res.status(401).send('Unauthorized');
     }
     if (!blog) {
-        //return res.status(404).send({message: 'Blog not found'})
         errorsMessages.push({ message: 'blog not found', field: 'blogId' });
     }
     if (!title || title.trim().length === 0 || title.length > 30) {
