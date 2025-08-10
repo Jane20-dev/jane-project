@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
-import { blogCollection, BlogType } from './db';
+import { blogCollection, BlogType } from '../db/db';
 import {ObjectId, SortDirection} from 'mongodb';
-import {runDb} from './db'
+import {runDb} from '../db/db'
 import { isMemberName } from 'typescript';
-import { BasePagination } from './db';
+import { BasePagination } from '../db/db';
 
 const startServer = async () =>{
     await runDb()

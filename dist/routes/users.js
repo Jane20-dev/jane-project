@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.userRoute = void 0;
 const express_1 = require("express");
 const users_repository_1 = require("../repositories/users-repository");
-const user_service_1 = require("../services/user-service");
+const auth_service_1 = require("../services/auth-service");
 exports.userRoute = (0, express_1.Router)();
 const checkBasicAuth = (req, res) => {
     const isHeaders = req.headers['authorization'];
@@ -61,7 +61,7 @@ exports.userRoute.post('/', async (req, res) => {
         return res.status(400).send({ errorsMessages });
     }
     try {
-        const result = await user_service_1.userService.registerUser(login, email, password);
+        const result = await auth_service_1.userService.registerUser(login, email, password);
         if ('errorsMessages' in result) {
             return res.status(400).json(result);
         }

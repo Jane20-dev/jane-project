@@ -1,6 +1,6 @@
 import {Request, Response, Router} from 'express'
-import { blogCollection } from '../repositories/db';
-import { postsCollection } from '../repositories/db';
+import { blogCollection } from '../db/db';
+import { postsCollection } from '../db/db';
 import { postsRepository } from '../repositories/posts-repository';
 import { ObjectId } from 'mongodb';
 import { commentsRepository } from '../repositories/comments-repository';

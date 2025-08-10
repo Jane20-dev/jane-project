@@ -1,44 +1,44 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.usersRepository = void 0;
-const db_1 = require("./db");
-const db_2 = require("./db");
+exports.usersRepository = exports.UsersRepository = void 0;
+const db_1 = require("../db/db");
+const db_2 = require("../db/db");
 const startServer = async () => {
     await (0, db_1.runDb)();
 };
 startServer();
-exports.usersRepository = {
+class UsersRepository {
     // Создание пользователя
     async createUser(user) {
         await db_2.usersCollection.insertOne(user);
         return user;
-    },
+    }
     async findUserById(userId) {
-        return db_2.usersCollection.findOne({ userId });
-    },
+        return db_2.usersCollection.findOne({ id: userId });
+    }
     async findUserByLogin(login) {
         return db_2.usersCollection.findOne({ login });
-    },
+    }
     async findUserByEmail(email) {
         return db_2.usersCollection.findOne({ email });
-    },
+    }
     async findUserByLoginOrEmail(loginOrEmail) {
         return db_2.usersCollection.findOne({
             $or: [{ login: loginOrEmail }, { email: loginOrEmail }],
         });
-    },
+    }
     async deletedUserssbyId(id) {
         const result = await db_2.usersCollection.deleteOne({ id: id });
         return result.deletedCount > 0;
-    },
+    }
     async updateEmailStatus(userId, isConfirmed) {
         const result = await db_2.usersCollection.updateOne({ id: userId }, { $set: { 'emailConfirmation.isConfirmed': isConfirmed } });
         return result.modifiedCount === 1;
-    },
+    }
     async findUserByConfrimationCode(emailConfirmationCode) {
         const user = await db_2.usersCollection.findOne({ "emailConfirmation.confirmationCode": emailConfirmationCode });
         return user;
-    },
+    }
     async updateConfirmationCode(userId, newCode, newExpiration) {
         const result = await db_2.usersCollection.updateOne({ id: userId }, {
             $set: {
@@ -48,7 +48,7 @@ exports.usersRepository = {
             }
         });
         return result.modifiedCount === 1;
-    },
+    }
     async findUsersList(query) {
         const { searchLoginTerm, searchEmailTerm, sortBy = 'createdAt', sortDirection = 'desc', pageNumber = 1, pageSize = 10, } = query;
         const filter = {};
@@ -84,15 +84,18 @@ exports.usersRepository = {
                 createdAt: user.createdAt,
             })),
         };
-    },
+    }
     async updatedRefreshToken(userId, newRefreshToken) {
         const result = await db_2.usersCollection.updateOne({ id: userId }, { $set: { refreshToken: newRefreshToken } });
         return result.modifiedCount === 1;
-    },
+    }
     async findUserByRefreshToken(refreshToken) {
         return db_2.usersCollection.findOne({ refreshToken: refreshToken });
-    },
+    }
     async findRefreshTokenInDb(refreshToken) {
         return db_2.usersCollection.findOne({ refreshToken: refreshToken });
-    },
-};
+    }
+}
+exports.UsersRepository = UsersRepository;
+;
+exports.usersRepository = new UsersRepository();

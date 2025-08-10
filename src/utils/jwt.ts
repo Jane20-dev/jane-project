@@ -1,35 +1,49 @@
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
-const jWT_SECRET: string = process.env.JWT_SECRET || '1aB2cE3fG4hI5jK6lM7nO8pQ9rS0tU1vW2xY3z!@#$%^&*()';
+const JWT_SECRET: string = process.env.JWT_SECRET || '1aB2cE3fG4hI5jK6lM7nO8pQ9rS0tU1vW2xY3z!@#$%^&*()';
 
+
+declare global {
+    namespace Express {
+        interface Request{
+            userPayload: TokenPayload | null
+        }
+    }
+}
 export interface TokenPayload {
     userLogin: string;
     userId: string;
     email: string;
-    jti?: string; 
+    deviceId: string;
+    jti?: string;   
+
+    iat?: number;
+    exp?: number
     
 };
 
-export const generateAccessToken = (payload: TokenPayload): string => {
-    return jwt.sign(payload, jWT_SECRET,
+export const generateAccessToken = (payload:  TokenPayload): string => {
+    const {jti, iat, exp, ...payloadWithoutExpandIat} = payload as any
+    return jwt.sign(payloadWithoutExpandIat, JWT_SECRET,
         {
-            expiresIn: '10s'
+            expiresIn: '10m'
         }
     )
 };
 
-
-export const generateRefreshToken = (payload: TokenPayload): string => {
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || '1aB2cE3fG4hI5jK6lM7nO8pQ9rS0tU1vW2xY3z!@#$%^&*()' ;
+export const generateRefreshToken = (payload: TokenPayload, expiresInSeconds: number): string => {
+   const { iat, exp, ...payloadWithoutExpAndIat } = payload as any;
     const jti = uuidv4();
 
-    const refreshTokenPayload: TokenPayload = { ...payload, jti: jti };
+    const refreshTokenPayload: TokenPayload = { ...payloadWithoutExpAndIat, jti: jti};
 
     return jwt.sign(
         refreshTokenPayload, 
-        jWT_SECRET,          
+        JWT_REFRESH_SECRET,          
         {
-            expiresIn: '20s'
+            expiresIn: `${expiresInSeconds}s`
         }
     );
 };
@@ -40,7 +54,7 @@ export const generateRefreshToken = (payload: TokenPayload): string => {
 
 export const verifyAccessToken = (token: string): TokenPayload | null => {
     try {
-        return  jwt.verify(token, jWT_SECRET) as TokenPayload;
+        return  jwt.verify(token, JWT_SECRET) as TokenPayload;
     } catch (error) {
         console.error('Error with creating JWT token',error)
         return null
@@ -49,7 +63,7 @@ export const verifyAccessToken = (token: string): TokenPayload | null => {
 
 export const verifyRefreshToken = (token: string): TokenPayload | null => {
     try {
-        return jwt.verify(token, jWT_SECRET) as TokenPayload;
+        return jwt.verify(token, JWT_REFRESH_SECRET as string) as TokenPayload;
     } catch (error) {
         console.error('Error with creating JWT token',error)
         return null

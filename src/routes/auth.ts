@@ -1,12 +1,17 @@
 import { Request, Response, Router, NextFunction} from 'express';
-import { userService } from '../services/user-service';
+import { userService } from '../services/auth-service';
 import { verifyRefreshToken, verifyAccessToken, TokenPayload, generateAccessToken, generateRefreshToken } from '../utils/jwt';
 import { validationResult } from 'express-validator'; 
 import { loginValidation,registerValidation , confirmationValidation,resendingValidation} from '../validation/auth-validation';
+import { usersRepository } from '../repositories/users-repository';
+import { deviceRepository } from '../repositories/device-repository';
+import jwt from 'jsonwebtoken';
+import {  ipLimiter} from '../middleware/rate-limiter';
 
 
 declare module 'express-serve-static-core' {
   interface Request {
+    userPayload?: TokenPayload; 
     user?: TokenPayload; 
   }
 }
@@ -14,30 +19,65 @@ declare module 'express-serve-static-core' {
 export const authRoute = Router();
 
 // --- Middleware для аутентификации JWT токена ---
-export const authenticateToken = (req: Request, res: Response, next: Function) => {
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
  
-  const authHeader = req.headers['authorization'];
-  
-  if(!authHeader|| !authHeader.startsWith('Bearer')){
-    return res.status(401).json({message: 'Need Bearer token'})
+
+
+  let token = null;
+  let isRefreshToken = false;
+
+  const authHeader = req.headers.authorization;
+
+
+  //авторизация
+  if(authHeader && authHeader.startsWith('Bearer')){
+   token = authHeader.split(' ')[1]
+   console.log('Диагностика: Токен найден в заголовке Authorization.');
   }
-  const token = authHeader && authHeader.split(' ')[1];
+    if(req.cookies && req.cookies.refreshToken){
+      token = req.cookies.refreshToken;
+      isRefreshToken = true; 
+    }
+  
+  
 
   //  Если токена нет, отправляем 401 Unauthorized
   if (!token) {
-    return res.status(401).json({ message: 'Требуется аутентификация: токен не предоставлен.' });
+    return res.status(401).json({ message: 'Need Bearer token' });
   }
 
   try {
     
-  const decodedPayload = verifyAccessToken(token);
+  let decodedPayload: TokenPayload | null = null;
 
  
-  if (!decodedPayload) {
-    return res.status(401).json({ message: 'Недействительный или просроченный токен.' });
+  if (!isRefreshToken) {
+    decodedPayload = verifyRefreshToken(token)
+    
+  }else{
+    decodedPayload = verifyAccessToken(token)
   }
 
-  req.user = decodedPayload;
+
+  if(!decodedPayload?.userId || !decodedPayload?.deviceId || !decodedPayload.jti){
+    return res.status(401).json({message: 'Недействительный токеен: Пользователь не найден!'})
+  }
+  const user = await usersRepository.findUserById(decodedPayload.userId);
+
+    if (!user) {
+      return res.status(401).json({ message: 'Недействительный токен: Пользователь не найден!' });
+    }
+
+
+const devicesession = await deviceRepository.findDeviceSessionInDB(decodedPayload.deviceId, decodedPayload.userId, decodedPayload.jti);
+if(!devicesession || devicesession.expiresAt < new Date()){
+  return res.status(401).send({message: 'Cannot find device in bd'});
+
+}
+
+console.log(`[authenticateToken] Токен декодирован: userId=${decodedPayload.userId}, deviceId=${decodedPayload.deviceId}`);
+
+  req.userPayload = decodedPayload;
   return next()
 
   } catch (error: any) {
@@ -57,7 +97,7 @@ export const authenticateToken = (req: Request, res: Response, next: Function) =
 
 };
 
-authRoute.post('/registration', registerValidation, async (req: Request, res: Response) =>{
+authRoute.post('/registration',ipLimiter(5,10) ,registerValidation, async (req: Request, res: Response) =>{
   const { login, email, password } = req.body;
 
   const errors = validationResult(req);
@@ -69,7 +109,7 @@ authRoute.post('/registration', registerValidation, async (req: Request, res: Re
   
   try {
    
-  const registrationUser = await userService.registerUser(login,email,password);
+  const registrationUser =  userService.registerUser(login,email,password);
   if('errorsMessages' in registrationUser){
     return res.status(400).json({errorsMessages: registrationUser.errorsMessages })
   }
@@ -84,7 +124,7 @@ authRoute.post('/registration', registerValidation, async (req: Request, res: Re
 
 })
 
-authRoute.post('/registration-confirmation',confirmationValidation,  async (req: Request, res: Response)=>{
+authRoute.post('/registration-confirmation', ipLimiter(5,10),  confirmationValidation, async (req: Request, res: Response)=>{
   const {code} = req.body;
 
   const errors = validationResult(req);
@@ -92,15 +132,6 @@ authRoute.post('/registration-confirmation',confirmationValidation,  async (req:
   if(!errors.isEmpty()){
     return res.status(400).json({errors: errors.array()});
   }
-  // const errorsMessages = []
-
-
-  // if(!code || typeof code !== 'string' || code.trim().length === 0 ){
-  //   errorsMessages.push({ message: 'Confirmation code is required', field: 'code' });
-  // }
-  // if (errorsMessages.length > 0){
-  //   return res.status(400).send({errorsMessages});
-  // }
 
   try {
     const isConfirmed = await userService.confirmEmail(code)
@@ -121,7 +152,7 @@ authRoute.post('/registration-confirmation',confirmationValidation,  async (req:
  
 })
 
-authRoute.post('/registration-email-resending', resendingValidation, async (req: Request, res: Response)=>{
+authRoute.post('/registration-email-resending',  ipLimiter(5, 10),  resendingValidation,   async (req: Request, res: Response)=>{
   const {email} = req.body;
 
   const errors = validationResult(req);
@@ -129,17 +160,9 @@ authRoute.post('/registration-email-resending', resendingValidation, async (req:
   if(!errors.isEmpty()){
     return res.status(400).json({errors: errors.array()});
   }
-  // const errorsMessages = []
-
-  // if (!email || typeof email !== 'string' || email.trim().length === 0) {
-  //   errorsMessages.push({ message: 'not valid email', field: 'email' });
-  // }
-  // if (errorsMessages.length > 0){
-  //   return res.status(400).send({errorsMessages});
-  // }
 
   try {
-    const resendCodetoEmail = await userService.resendCode(email)
+    const resendCodetoEmail =  userService.resendCode(email)
     if(resendCodetoEmail &&'errorsMessages' in resendCodetoEmail){
       return res.status(400).json({errorsMessages: resendCodetoEmail.errorsMessages});
     }
@@ -174,7 +197,7 @@ authRoute.get('/me', authenticateToken, async (req: Request, res: Response) => {
 });
 
 
-authRoute.post('/login',loginValidation,  async (req: Request, res: Response) => {
+authRoute.post('/login',  ipLimiter(5,10),  loginValidation,  async (req: Request, res: Response) => {
   const { loginOrEmail, password } = req.body;
   const errors = validationResult(req);
 
@@ -184,29 +207,22 @@ authRoute.post('/login',loginValidation,  async (req: Request, res: Response) =>
     
 
   try {
-    const user = await userService.loginUser(loginOrEmail, password);
+    const ip = req.ip || 'unknown';
+    const userAgent = req.headers['user-agent'];
+  
+    const user = await userService.loginUser(loginOrEmail, password, ip, userAgent);
+
+
     if (!user) {
       return res.status(401).send('Unauthorized');
     }
-
-    const tokenPayload: TokenPayload = {
-      userId: user.id,
-      userLogin: user.login,
-      email: user.email
-    };
-
-    const accessToken = generateAccessToken(tokenPayload);
-
-    const refreshToken = generateRefreshToken(tokenPayload);
-    await userService.saveRefreshToken(user.id,refreshToken);
-
-    res.cookie('refreshToken', refreshToken,{
+    res.cookie('refreshToken', user.refreshToken,{
       httpOnly: true,
       secure: true,
       maxAge: 20*1000,
     });
 
-    res.status(200).json({accessToken:accessToken});
+    res.status(200).json({accessToken: user.accessToken});
   } catch (error) {
     console.log(error, ' error');
     res.status(500).send('Error during login');
@@ -216,51 +232,43 @@ authRoute.post('/login',loginValidation,  async (req: Request, res: Response) =>
 
   
 });
+const REFRESH_TOKEN_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 7; 
 
-authRoute.post('/refresh-token', async (req: Request, res: Response) =>{
-  const refreshTokenFromCookie = req.cookies.refreshToken;
+authRoute.post('/refresh-token', async (req: Request, res: Response) => {
+    const refreshTokenFromCookie = req.cookies.refreshToken;
+    const ip = req.ip || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
 
-  if(!refreshTokenFromCookie) return res.status(401).send('Unauthorized');
-
-  try {
-    const decodedPayload: TokenPayload | null = verifyAccessToken(refreshTokenFromCookie)
-    if(!decodedPayload || !decodedPayload.jti){
-      res.clearCookie('refreshToken');
-      return res.status(401).send('Unauthorized');
-    } 
-
-    const user = await userService.findRefreshTokeninDb(refreshTokenFromCookie);
-
-    if(!user){
-      res.clearCookie('refreshToken');
-      return res.status(401).send('Unauthorized');
+    // 1. Проверка наличия Refresh Token в куках
+    if (!refreshTokenFromCookie) {
+        return res.status(401).send('1.Unauthorized');
     }
 
-    const newAccessToken = generateAccessToken({
-      userId: user.id,
-      userLogin: user.login,
-      email: user.email
-    });
-    const newRefreshToken = generateRefreshToken({ 
-        userId: user.id, 
-        userLogin: user.login, 
-        email: user.email 
+        
+    try {
+    const oldDecodedPayload = await userService.refreshTokensSession(refreshTokenFromCookie, ip, userAgent);
+
+        // Если токен недействителен или не содержит нужных данных
+    if (!oldDecodedPayload) {
+      res.clearCookie('refreshToken');
+      return res.status(401).send('2.Invalid or expired refresh token.');
+    }
+
+    res.cookie('refreshToken', oldDecodedPayload.refreshToken,{
+        httpOnly: true,
+        secure: true,
+        maxAge: REFRESH_TOKEN_EXPIRES_IN_SECONDS * 1000
+          
     });
 
-    await userService.saveRefreshToken(user.id, newRefreshToken)
+    return res.status(200).json({accessToken: oldDecodedPayload.accessToken})
 
-    res.cookie('refreshToken', newRefreshToken,{
-      httpOnly: true,
-      secure: true,
-      maxAge: 20*1000,
-    });
-    res.status(200).json({accessToken: newAccessToken})
-  } catch (error) {
-    res.clearCookie('refreshToken');
-    return res.status(401).send('Unauthorized');
-    
-  }
-  return true;
+    } catch (error) {
+    res.clearCookie('refreshToken'); 
+    return res.status(401).send('3. in the end cannot refresh token');
+        
+}
+      
 });
 
 authRoute.post('/logout', async (req: Request, res: Response)=>{
@@ -270,13 +278,10 @@ authRoute.post('/logout', async (req: Request, res: Response)=>{
 
   try {
 
-    const checkThisRefreshToken = verifyAccessToken(refreshTokenFromCookie);
-      if(!checkThisRefreshToken || !checkThisRefreshToken.jti){
-        res.clearCookie('refreshToken');
-        return res.status(401).send('2. Unauthorized');
-      }
+  
+    const isLogout = await userService.logoutUser(refreshTokenFromCookie);
 
-      const isLogout = await userService.revokeRefreshToken(refreshTokenFromCookie);
+
       if(!isLogout){
         res.clearCookie('refreshToken');
         return res.status(401).send('3. Unauthorized');

@@ -1,6 +1,6 @@
 import {Request, Response, Router} from "express"
 import { commentsRepository } from "../repositories/comments-repository";
-import { commentsCollection } from "../repositories/db";
+import { commentsCollection } from "../db/db";
 import { authenticateToken } from "./auth";
 import { TokenPayload } from "../utils/jwt";
 

@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.postRoute = void 0;
 const express_1 = require("express");
-const db_1 = require("../repositories/db");
-const db_2 = require("../repositories/db");
+const db_1 = require("../db/db");
+const db_2 = require("../db/db");
 const posts_repository_1 = require("../repositories/posts-repository");
 const mongodb_1 = require("mongodb");
 const comments_repository_1 = require("../repositories/comments-repository");

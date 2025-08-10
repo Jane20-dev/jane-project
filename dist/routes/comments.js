@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.commentRoute = void 0;
 const express_1 = require("express");
 const comments_repository_1 = require("../repositories/comments-repository");
-const db_1 = require("../repositories/db");
+const db_1 = require("../db/db");
 const auth_1 = require("./auth");
 exports.commentRoute = (0, express_1.Router)();
 exports.commentRoute.get('/:id', async (req, res) => {

@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
-import {CommentatorInfoType, CommentType, postsCollection, PostType, CommentResponseClientType} from './db'
-import {runDb} from './db'
-import { commentsCollection } from './db';
+import {CommentatorInfoType, CommentType, postsCollection, PostType, CommentResponseClientType} from '../db/db'
+import {runDb} from '../db/db'
+import { commentsCollection } from '../db/db';
 import { ObjectId } from 'mongodb';
 
 

@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 import {ObjectId, SortDirection} from 'mongodb';
-import {postsCollection, PostType} from './db'
-import { blogCollection, BlogType } from './db';
-import {runDb} from './db'
-import { BasePagination } from './db';
+import {postsCollection, PostType} from '../db/db'
+import { blogCollection, BlogType } from '../db/db';
+import {runDb} from '../db/db'
+import { BasePagination } from '../db/db';
 
 
 const startServer = async () =>{

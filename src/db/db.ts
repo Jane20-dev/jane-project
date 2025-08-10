@@ -1,4 +1,4 @@
-
+import mongoose from 'mongoose';
 import { MongoClient, ObjectId } from "mongodb";
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -30,6 +30,7 @@ export type PostType = {
 }
 
 export type UserType = {
+   
     passwordHash: string;
     _id? : ObjectId;
     id: string;
@@ -58,7 +59,26 @@ export type CommentType = {
     postId: string
 }
 
+export type DeviceSessionType = {
+    userId: string;
+    deviceId: string;
+    ip: string;
+    deviceName: string;
+    issuedAt: Date;
+    expiresAt: Date;
+    lastActiveDate: Date;
+    jti: string;   
+
+}
+
 export type CommentResponseClientType = Omit<CommentType, 'postId'>;
+
+export type RequestType = {
+    _id?: ObjectId;
+    ip: string;
+    url: string;
+    date: Date;
+};
 
 
 
@@ -86,5 +106,8 @@ export const runDb = async()=>{
 export const blogCollection = client.db().collection<BlogType>('blog');
 export const postsCollection = client.db().collection<PostType>('post');
 export const usersCollection = client.db().collection<UserType>('users'); 
-export const commentsCollection = client.db().collection<CommentType>('comments')
+export const commentsCollection = client.db().collection<CommentType>('comments');
+export const deviceSessionsCollection = client.db().collection<DeviceSessionType>('securitydevices');
+
+export const requestsCollection = client.db().collection<RequestType>('requests');
 

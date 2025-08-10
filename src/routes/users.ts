@@ -1,6 +1,7 @@
 import {Request, Response, Router} from 'express'
 import { usersRepository } from '../repositories/users-repository';
-import { userService } from '../services/user-service';
+import { userService} from '../services/auth-service';
+import { AuthService } from '../services/auth-service';
 
 
 export const userRoute = Router();

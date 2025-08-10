@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.blogsRepository = void 0;
-const db_1 = require("./db");
+const db_1 = require("../db/db");
 const mongodb_1 = require("mongodb");
-const db_2 = require("./db");
+const db_2 = require("../db/db");
 const startServer = async () => {
     await (0, db_2.runDb)();
 };

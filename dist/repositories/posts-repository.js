@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.postsRepository = void 0;
 const uuid_1 = require("uuid");
 const mongodb_1 = require("mongodb");
-const db_1 = require("./db");
-const db_2 = require("./db");
-const db_3 = require("./db");
+const db_1 = require("../db/db");
+const db_2 = require("../db/db");
+const db_3 = require("../db/db");
 const startServer = async () => {
     await (0, db_3.runDb)();
 };

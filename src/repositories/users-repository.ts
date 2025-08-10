@@ -1,38 +1,38 @@
-import { v4 as uuidv4 } from 'uuid';
-import {runDb} from './db'
-import { usersCollection, UserType } from './db';
-import { ObjectId } from 'mongodb';
+
+import {runDb} from '../db/db'
+import { usersCollection, UserType } from '../db/db';
+
 
 const startServer = async () =>{
     await runDb()
 }
 startServer()
 
-export const usersRepository = {
+export class UsersRepository {
     // Создание пользователя
     async createUser(user: UserType): Promise<UserType> {
       await usersCollection.insertOne(user);
       return user;
-    },
+    }
 
     async findUserById(userId: string): Promise<UserType | null>{
-      return usersCollection.findOne({userId});
-    },
+      return usersCollection.findOne({id: userId});
+    }
     async findUserByLogin(login: string): Promise<UserType | null> {
         return usersCollection.findOne({ login });
-    },
+    }
     async findUserByEmail(email: string): Promise<UserType | null> {
         return usersCollection.findOne({ email });
-    },
+    }
     async findUserByLoginOrEmail(loginOrEmail: string): Promise<UserType | null> {
         return usersCollection.findOne({
           $or: [{ login: loginOrEmail }, { email: loginOrEmail }],
         });
-    },
+    }
     async deletedUserssbyId(id: string){
             const result = await usersCollection.deleteOne({id:id})
             return result.deletedCount > 0
-    },
+    }
      async updateEmailStatus (userId: string, isConfirmed: boolean ): Promise<boolean>{
       const result =  await usersCollection.updateOne(
         {id: userId},
@@ -40,11 +40,11 @@ export const usersRepository = {
         
       );
       return result.modifiedCount === 1;
-    },
+    }
     async findUserByConfrimationCode(emailConfirmationCode: string): Promise<UserType | null>{
       const user = await usersCollection.findOne({"emailConfirmation.confirmationCode": emailConfirmationCode})
       return user;
-    },
+    }
     async updateConfirmationCode(
       userId: string,
       newCode: string,
@@ -62,7 +62,7 @@ export const usersRepository = {
         }
       );
       return result.modifiedCount === 1;
-    },
+    }
     async findUsersList(query: {
         searchLoginTerm?: string;
         searchEmailTerm?: string;
@@ -118,7 +118,7 @@ export const usersRepository = {
                 createdAt: user.createdAt,
             })),
           };
-    },
+    }
 
 
     
@@ -128,12 +128,13 @@ export const usersRepository = {
         {$set:{refreshToken: newRefreshToken}}
       );
       return result.modifiedCount === 1;
-    },
+    }
     async findUserByRefreshToken(refreshToken: string): Promise<UserType | null> {
       return usersCollection.findOne({refreshToken: refreshToken});
-    },
+    }
     async findRefreshTokenInDb(refreshToken: string):Promise<UserType|null> {
       return usersCollection.findOne({refreshToken: refreshToken})
-    },
+    }
    
 };
+export const usersRepository = new UsersRepository();
